@@ -1,0 +1,3 @@
+SELECT null, accounttitle, currentyear FROM gl_dashboard 
+WHERE userid=:APP_USER AND srno BETWEEN 1 AND 11 
+ORDER BY by srno

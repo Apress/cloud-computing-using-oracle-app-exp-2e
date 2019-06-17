@@ -1,0 +1,5 @@
+names:	P95_TRAN_NO P95_COCODE P95_COYEAR P95_COMONTHID P95_VCHCODE
+values:	#TRAN_NO# &P94_COCODE. &P94_COYEAR. &P94_COMONTHID. &P94_VCHCODE.
+
+<img src="#IMAGE_PREFIX#app_ui/img/icons/apex-edit-view.png" class="apex-edit-view" alt="">
+

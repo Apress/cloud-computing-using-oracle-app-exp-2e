@@ -1,0 +1,13 @@
+declare
+   Vdatafound number := 0;
+   Verrortext varchar2(100);
+begin
+   select count(*) into Vdatafound from gl_tran_master TM, gl_tran_detail TD 
+   where TM.vchdate <= to_date(:P72_TO, 'DD-MON-YYYY') and
+         TD.coacode >= :P72_ACCOUNTFROM and TD.coacode <= :P72_ACCOUNTTO and 
+         TM.cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER));
+   if Vdatafound <= 0 THEN
+      Verrortext := 'No data found for the given criteria';
+   end if;
+   return rtrim(Verrortext);
+end;

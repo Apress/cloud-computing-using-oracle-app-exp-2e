@@ -1,0 +1,2 @@
+SELECT "ROWID", "COACODE","COATITLE","COALEVEL","COANATURE","COATYPE","CCCODE"
+FROM "#OWNER#"."GL_COA" where cocode = (SELECT cocode FROM gl_users WHERE userid = :app_user) ORDER BY coacode

@@ -1,0 +1,29 @@
+select coacode, coatitle, tran_no, vchdate, vchcode, vchtype, vchno, vchdescription, vchdr, vchcr, SUM (vchdr - vchcr) OVER ( partition 
+by coacode ORDER BY coacode, vchdate, tran_no, vchno) as balance
+FROM      (
+  	      SELECT  TD.coacode, COA.coatitle, 0 as tran_no, to_date(:P72_FROM,'DD-MON-YYYY') - 1 as vchdate
+              ,       0 as vchcode
+              ,       '' as vchtype
+	      ,	      null as vchno
+	      ,	      'Opening Balance as on '||to_char(to_date(:P72_FROM,'DD-MON-YYYY') - 1) as Vchdescription
+	      ,	      sum(TD.vchdr) as vchdr
+	      ,	      sum(TD.vchcr) as vchcr
+	      ,	      1	AS grp
+	      FROM    gl_coa COA, gl_voucher VCH, gl_tran_master TM, gl_tran_detail TD
+         where TM.vchdate < to_date(:P72_FROM, 'DD-MON-YYYY') and TD.coacode=COA.coacode and TD.coacode >= :P72_ACCOUNTFROM and TD.coacode <= :P72_ACCOUNTTO and TM.cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and TM.tran_no=TD.tran_no and TM.vchcode=VCH.vchcode and COA.cocode=TM.cocode
+	      GROUP BY TD.coacode, COA.coatitle
+	      	      --
+		  UNION ALL
+		      --
+	     SELECT  TD.coacode, COA.coatitle, TM.tran_no, TM.vchdate
+             ,       TM.vchcode
+	     ,	     VCH.vchtype
+	     ,	     TM.vchno
+	     ,	     TD.vchdescription
+	     ,	     TD.vchdr
+	     ,	     TD.vchcr
+	     ,	     2 AS grp
+	     FROM    gl_coa COA, gl_voucher VCH, gl_tran_master TM, gl_tran_detail TD 
+             where TM.vchdate between to_date(:P72_FROM,'DD-MON-YYYY') and to_date(:P72_TO, 'DD-MON-YYYY') and TD.coacode=COA.coacode and TD.coacode >= :P72_ACCOUNTFROM and TD.coacode <= :P72_ACCOUNTTO and TM.cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and TM.tran_no=TD.tran_no and TM.vchcode=VCH.vchcode and COA.cocode=TM.cocode
+	  )
+ORDER BY coacode, grp, vchdate, vchno

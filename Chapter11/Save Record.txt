@@ -1,0 +1,10 @@
+declare
+Vcocode number;
+begin
+   select cocode into Vcocode from gl_users where upper(userid)=upper(:APP_USER);
+   if :P14_ROWID is null then -- New Record
+      insert into gl_cost_center values (Vcocode,:P14_CCcode,:P14_CCtitle,:P14_CClevel);
+   else
+      update gl_cost_center set CCtitle=:P14_CCtitle where ROWID=:P14_ROWID;
+   end if;
+end;

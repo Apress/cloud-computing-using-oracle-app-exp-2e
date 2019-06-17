@@ -1,0 +1,22 @@
+DECLARE
+   Vcoacode varchar2(11);
+   Vcoatitle varchar2(50);
+   Vcoalevel number(1);
+   Vcoanature varchar2(11);
+   Vcoatype varchar2(11);
+   Vcccode varchar2(5);
+   cursor coa_cur is
+   select * from gl_coa where cocode=:P54_SOURCE order by coacode,coalevel;
+   coa_rec coa_cur%ROWTYPE;
+BEGIN
+   for coa_rec in coa_cur loop
+      Vcoacode := coa_rec.coacode;
+      Vcoatitle := coa_rec.coatitle;
+      Vcoalevel := coa_rec.coalevel;
+      Vcoanature := coa_rec.coanature;
+      Vcoatype := coa_rec.coatype;
+      Vcccode := coa_rec.cccode;
+      insert into gl_coa values (:P54_TARGET,Vcoacode,Vcoatitle,Vcoalevel,Vcoanature,Vcoatype,Vcccode);
+      commit;
+   end loop;
+END;

@@ -1,0 +1,3 @@
+SELECT coacode||'-'||coatitle d, coacode r FROM gl_coa 
+WHERE  cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) AND coatype='Bank' 
+ORDER BY coacode

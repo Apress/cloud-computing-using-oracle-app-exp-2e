@@ -1,0 +1,1 @@
+SELECT s.segmentTitle,g.allow_access FROM gl_segments s, gl_groups_detail g WHERE s.segmentID=:P21_SELECTED_NODE AND s.segmentID=g.segmentID AND g.groupID=:P21_GROUPID1

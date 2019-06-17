@@ -1,0 +1,1 @@
+COCODE=:P95_COCODE and createdon between :P94_FROM and :P94_TO and vchverified=:P94_CRITERION and CLOSING=0

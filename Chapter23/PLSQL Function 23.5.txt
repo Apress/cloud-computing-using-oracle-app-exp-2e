@@ -1,0 +1,7 @@
+begin
+   if :P43_TRAN_NO IS NOT NULL and :P43_CLOSING=0 and :P43_VCHVERIFIED='N' and :P43_MONTHCLOSED=0 then
+      return true;
+   else
+      return false;
+   end if;
+end;

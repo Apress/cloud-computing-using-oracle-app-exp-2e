@@ -1,0 +1,19 @@
+declare
+   Vadmin varchar2(1);
+   Vallow varchar2(1);
+begin
+   select admin into Vadmin from gl_users where upper(userid)=upper(:APP_USER);
+   if Vadmin = 'N' then
+      select allow_access into Vallow from gl_groups_detail 
+      where pageID=:APP_PAGE_ID and itemRole='Save' and groupID=(select groupID from gl_users where upper(userid)=upper(:APP_USER));
+      if Vallow='Y' then
+         return true;
+      else
+         return false;
+      end if;
+   else 
+      return true;
+   end if;
+exception
+   when NO_DATA_FOUND then return false;
+end;

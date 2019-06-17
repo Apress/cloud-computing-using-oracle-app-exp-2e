@@ -1,0 +1,1 @@
+select cccode||'-'||cctitle t, cccode c from gl_cost_center where  cclevel=2 and cocode=(select cocode from gl_users where userid = :APP_USER) order by 1

@@ -1,0 +1,18 @@
+-- PL/SQL Function Body code for GET_PREVIOUS_TRAN_NO
+begin
+   if :P43_TRAN_NO IS NOT NULL and :P43_CLOSING=0 and :P43_VCHVERIFIED='N' and :P43_TRAN_NO_PREV IS NOT NULL then
+      return true;
+   else
+      return false;
+   end if;
+end;
+
+
+-- PL/SQL Function Body code for GET_NEXT_TRAN_NO
+begin
+   if :P43_TRAN_NO IS NOT NULL and :P43_CLOSING=0 and :P43_VCHVERIFIED='N' and :P43_TRAN_NO_NEXT IS NOT NULL then
+      return true;
+   else
+      return false;
+   end if;
+end;

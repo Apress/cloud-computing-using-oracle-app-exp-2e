@@ -1,0 +1,1 @@
+SELECT vchtype FROM gl_voucher WHERE vchcode=:P43_VCHCODE

@@ -1,0 +1,1 @@
+SELECT userid d, userid r FROM gl_users WHERE cocode=(select cocode from gl_users where userid = :APP_USER)

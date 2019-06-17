@@ -1,0 +1,32 @@
+function calcDIFF() {
+var model = apex.region("VOUCHER").widget().interactiveGrid("getViews", "grid").model;
+var dbKey = model.getFieldKey("VCHDR");
+var crKey = model.getFieldKey("VCHCR");
+var totDB = 0;
+var totCR = 0;
+
+model.forEach(function(r,idx,id) {
+    var dbval = parseFloat(r[dbKey], 10);
+    var crval = parseFloat(r[crKey], 10);
+    meta = model.getRecordMetadata(id);
+    
+    if (!isNaN(dbval) && !meta.deleted) {
+        totDB += dbval;
+    }
+    if (!isNaN(crval) && !meta.deleted) {
+        totCR += crval;
+    }
+});
+
+$s('P43_TOTDR',totDB);
+$s('P43_TOTCR',totCR);
+$s('P43_DIFF',totDB - totCR);
+if (totDB-totCR != 0) {
+   x=$v("P46_DIFF");
+   alert("Unbalanced Voucher - The difference is "+x);    
+} 
+if (totDB == 0 || totCR == 0) {
+   $s('P43_DIFF',999999);
+   alert("The voucher must have atleast two transactions");    
+}
+}

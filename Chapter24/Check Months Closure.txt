@@ -1,0 +1,13 @@
+declare
+   Vunclosed number := 0;
+   Verrortext varchar2(100);
+begin
+   select count(*) into Vunclosed from gl_fiscal_year 
+   where month_closed=0 and
+         cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and
+         coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER));
+   if Vunclosed >= 1 THEN
+      Verrortext := Vunclosed||' month(s) found unclosed. Cannot proceed with this process';
+   end if;
+   return rtrim(Verrortext);
+end;

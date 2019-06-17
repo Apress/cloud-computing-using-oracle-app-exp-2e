@@ -1,0 +1,19 @@
+declare
+   Vadmin varchar2(1);
+   Vallow varchar2(1);
+   VcurrentMonth number;
+   Verrortext varchar2(60);
+begin
+   select admin into Vadmin from gl_users where upper(userid)=upper(:APP_USER);
+   if Vadmin = 'N' then
+      select allow_access into Vallow from gl_groups_detail 
+      where segmentID=(select segmentID from gl_segments where segmentTitle='Switch Month' and segmentType='Item') and groupID=(select groupID from gl_users where upper(userid)=upper(:APP_USER));
+      if Vallow='N' then
+         select comonthid into VcurrentMonth from gl_users where upper(userid)=upper(:APP_USER);
+         if :P30_MONTH <> VcurrentMonth then
+            Verrortext := 'You are not allowed to switch month';
+         end if;
+      end if;
+   end if;
+   return rtrim(Verrortext);
+end;

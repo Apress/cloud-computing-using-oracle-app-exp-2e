@@ -1,0 +1,2 @@
+SELECT 1 FROM "#OWNER#"."GL_BANKS_OS" 
+WHERE cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) AND coacode=:P51_BANKS and reconciled=:P51_CRITERIA

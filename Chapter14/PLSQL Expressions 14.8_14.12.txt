@@ -1,0 +1,5 @@
+:request in ('SAVE','CREATE') or :request like 'GET_NEXT%' or :request like 'GET_PREV%'
+
+:COACODE is NOT NULL and (to_number(:VCHDR) > 0 or to_number(:VCHCR) > 0)
+
+:P43_VCHVERIFIED='N' and :P43_VCHPOSTED='N'

@@ -1,0 +1,10 @@
+declare
+   Vdependent number :=  0;
+begin
+   select count(*) into Vdependent from gl_tran_detail where COAcode = :P16_COAcode and cocode = (select cocode from gl_users where upper(userid) = upper(:app_user));
+   if Vdependent > 0 then
+      return false;
+   else
+      return true;
+   end if;
+end;

@@ -1,0 +1,3 @@
+SELECT vchtype d, vchcode r 
+FROM   gl_voucher 
+ORDER BY vchtype

@@ -1,0 +1,36 @@
+DECLARE
+VsegmentID number := 0;
+VsegmentParent Number;
+VsegmentType varchar2(4);
+vpageID number := 0;
+VitemRole varchar2(10);
+Vallow varchar2(1);
+VmasterRow number := 0;
+
+cursor segments_cur is
+select * 
+from gl_segments 
+order by segmentID;
+segments_rec segments_cur%ROWTYPE;
+
+BEGIN
+   if :request='Allow' then
+      Vallow := 'Y';
+   else
+      Vallow := 'N';
+   end if;
+   for segments_rec in segments_cur loop
+      VsegmentID := segments_rec.segmentID;
+      VsegmentParent := segments_rec.segmentParent;
+      VsegmentType := segments_rec.segmentType;
+      VpageID := segments_rec.pageID;
+      VitemRole := segments_rec.itemRole;
+      if VmasterRow = 0 then
+         insert into gl_groups_master values (:P21_GROUPID2,:P21_GROUPTITLE2);
+         commit;
+         VmasterRow := 1;
+      end if;  
+      insert into gl_groups_detail values (:P21_GROUPID2,VsegmentID,VsegmentParent,VsegmentType,VpageID,VitemRole,Vallow);
+      commit;
+   end loop;
+END;

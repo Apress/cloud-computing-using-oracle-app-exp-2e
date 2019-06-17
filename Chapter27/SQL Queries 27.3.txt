@@ -1,0 +1,15 @@
+SELECT cocode FROM gl_users WHERE userid=:APP_USER
+
+
+LOV Static Values: STATIC:New;NEW,Existing;EXISTING
+
+
+SELECT DISTINCT reportcode d, reportcode r 
+FROM gl_fs_setup WHERE cocode=:P18_COCODE
+
+
+SELECT reporttitle FROM gl_fs_setup 
+WHERE reportcode=:P18_REPORTCODE1 and cocode=:P18_COCODE
+
+
+

@@ -1,0 +1,2 @@
+DELETE FROM gl_groups_detail WHERE groupID=:P21_GroupID1;
+DELETE FROM gl_groups_master WHERE groupID=:P21_GroupID1;

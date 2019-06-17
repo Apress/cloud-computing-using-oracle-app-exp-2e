@@ -1,0 +1,1 @@
+STATIC:Capital;Capital,Liabilities;Liabilities,Assets;Assets,Expenses;Expenses,Revenue;Revenue

@@ -1,0 +1,25 @@
+declare
+   VparentFound number := 0;
+   VparentCode varchar2(11);
+begin
+-- First level will not be check because it doesn't have parent
+   if :P16_COALEVEL = 2 then
+      VparentCode := substr(:P16_COAcode,1,1);
+      select count(*) into VparentFound from gl_coa where COAcode=trim(VparentCode) and COAlevel=1 and cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER));
+   end if;
+
+   if :P16_COALEVEL = 3 then
+      VparentCode := substr(:P16_COAcode,1,3);
+      select count(*) into VparentFound from gl_coa where COAcode=trim(VparentCode) and COAlevel=2 and cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER));
+   end if;
+
+   if :P16_COALEVEL = 4 then
+      VparentCode := substr(:P16_COAcode,1,6);
+      select count(*) into VparentFound from gl_coa where COAcode=trim(VparentCode) and COAlevel=3 and cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER));
+   end if;
+   if VparentFound = 0 and :P16_COAlevel <> 1 then
+      return false;
+   else
+      return true;
+   end if;
+end;

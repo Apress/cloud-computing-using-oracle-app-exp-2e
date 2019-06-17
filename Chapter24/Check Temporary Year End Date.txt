@@ -1,0 +1,13 @@
+declare
+   Vtyedate date;
+   Verrortext varchar2(100);
+begin
+   select TYE_Executed into Vtyedate from gl_fiscal_year 
+   where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and
+         coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and
+         comonthid=1;
+   if TRUNC(Vtyedate) < TRUNC(SYSDATE) or Vtyedate is null THEN
+      Verrortext := 'Kindly execute Temporary Year End Process to create fresh closing entries';
+   end if;
+   return rtrim(Verrortext);
+end;

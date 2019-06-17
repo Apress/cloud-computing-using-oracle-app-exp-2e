@@ -1,0 +1,11 @@
+if length(:P16_COACODE) = 1 then
+   :P16_COALEVEL := 1;
+elsif length(:P16_COACODE) = 3 then
+   :P16_COALEVEL := 2;
+elsif length(:P16_COACODE) = 6 then
+   :P16_COALEVEL := 3;
+elsif length(:P16_COACODE) = 11 then
+   :P16_COALEVEL := 4;
+else
+   :P16_COALEVEL := 0;
+end if;

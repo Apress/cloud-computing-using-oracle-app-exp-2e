@@ -1,0 +1,14 @@
+SELECT cocode FROM gl_users WHERE userid = :app_user
+
+
+SELECT coyear FROM gl_users WHERE userid = :app_user
+
+
+SELECT DISTINCT coanature d, coanature r FROM gl_coa 
+WHERE cocode=(select cocode from gl_users where userid=:APP_USER)
+
+
+SELECT DISTINCT criterion FROM gl_budget 
+WHERE cocode=:P55_COCODE AND coyear=:P55_COYEAR AND coanature=:P55_COANATURE
+
+

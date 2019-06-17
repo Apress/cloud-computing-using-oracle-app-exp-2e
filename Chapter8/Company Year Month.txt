@@ -1,0 +1,7 @@
+declare
+   Vcoyear number;
+begin
+   select max(coyear) into Vcoyear from gl_fiscal_year where cocode=:P23_COMPANY;
+   update gl_users set cocode=:P23_COMPANY,coyear=Vcoyear,comonthID=1 where userid=:P23_USERID;
+   commit;
+end;

@@ -1,0 +1,14 @@
+begin
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,1,:P5_MONTH1,TO_DATE(:P5_FROM1,'DD-MM-YYYY'),TO_DATE(:P5_TO1,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,2,:P5_MONTH2,TO_DATE(:P5_FROM2,'DD-MM-YYYY'),TO_DATE(:P5_TO2,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,3,:P5_MONTH3,TO_DATE(:P5_FROM3,'DD-MM-YYYY'),TO_DATE(:P5_TO3,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,4,:P5_MONTH4,TO_DATE(:P5_FROM4,'DD-MM-YYYY'),TO_DATE(:P5_TO4,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,5,:P5_MONTH5,TO_DATE(:P5_FROM5,'DD-MM-YYYY'),TO_DATE(:P5_TO5,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,6,:P5_MONTH6,TO_DATE(:P5_FROM6,'DD-MM-YYYY'),TO_DATE(:P5_TO6,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,7,:P5_MONTH7,TO_DATE(:P5_FROM7,'DD-MM-YYYY'),TO_DATE(:P5_TO7,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,8,:P5_MONTH8,TO_DATE(:P5_FROM8,'DD-MM-YYYY'),TO_DATE(:P5_TO8,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,9,:P5_MONTH9,TO_DATE(:P5_FROM9,'DD-MM-YYYY'),TO_DATE(:P5_TO9,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,10,:P5_MONTH10,TO_DATE(:P5_FROM10,'DD-MM-YYYY'),TO_DATE(:P5_TO10,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,11,:P5_MONTH11,TO_DATE(:P5_FROM11,'DD-MM-YYYY'),TO_DATE(:P5_TO11,'DD-MM-YYYY'),1,0,0,null);
+insert into gl_fiscal_year values (:P5_COMPANIES,:P5_YEAR,12,:P5_MONTH12,TO_DATE(:P5_FROM12,'DD-MM-YYYY'),TO_DATE(:P5_TO12,'DD-MM-YYYY'),1,0,0,null);
+end;

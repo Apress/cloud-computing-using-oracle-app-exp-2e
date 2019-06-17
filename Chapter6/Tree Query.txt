@@ -1,0 +1,10 @@
+select case when connect_by_isleaf = 1 then 0 when level = 1 then 1 else -1 end as status,
+       level,
+       segmenttitle as title,
+       NULL  as icon,
+       segmentid as value,
+       'View' as tooltip, apex_util.prepare_url('f?p='||:APP_ID||':20:'||:APP_SESSION||'::NO::P20_SEGMENTID:'||segmentid) As link
+from gl_segments
+start with segmentparent = 0
+connect by prior segmentid = segmentparent
+order siblings by segmentid

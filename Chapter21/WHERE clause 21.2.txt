@@ -1,0 +1,1 @@
+WHERE cocode=(select cocode from gl_users where userid=:APP_USER) AND coacode=:P51_BANKS and reconciled=:P51_CRITERIA

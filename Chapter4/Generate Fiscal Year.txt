@@ -1,0 +1,61 @@
+declare
+   Vyear number;
+   VleapYear number;
+begin
+   Vyear := :P5_YEAR;
+   if :P5_MONTH = 7 then
+      :P5_MONTH1 := 'July';
+      :P5_FROM1 := '01-07-'||Vyear;
+      :P5_TO1 := '31-07-'||Vyear;
+--    'August'
+      :P5_MONTH2 := 'August';
+      :P5_FROM2 := '01-08-'||Vyear;
+      :P5_TO2 := '31-08-'||Vyear;
+--    'September'
+      :P5_MONTH3 := 'September';
+      :P5_FROM3 := '01-09-'||Vyear;
+      :P5_TO3 := '30-09-'||Vyear;
+--    'October'
+      :P5_MONTH4 := 'October';
+      :P5_FROM4 := '01-10-'||Vyear;
+      :P5_TO4 := '31-10-'||Vyear;
+--    'November'
+      :P5_MONTH5 := 'November';
+      :P5_FROM5 := '01-11-'||Vyear;
+      :P5_TO5 := '30-11-'||Vyear;
+--    'December'
+      :P5_MONTH6 := 'December';
+      :P5_FROM6 := '01-12-'||Vyear;
+      :P5_TO6 := '31-12-'||Vyear;
+      Vyear := Vyear+1;
+--    'January'
+      :P5_MONTH7 := 'January';
+      :P5_FROM7 := '01-01-'||Vyear;
+      :P5_TO7 := '31-01-'||Vyear;
+--    'February'
+      :P5_MONTH8 := 'February';
+      :P5_FROM8 := '01-02-'||Vyear;
+      VleapYear := mod(Vyear,4);
+      if VleapYear=0 then
+         :P5_TO8 := '29-02-'||Vyear;
+      else
+         :P5_TO8 := '28-02-'||Vyear;
+      end if;
+--    'March'
+      :P5_MONTH9 := 'March';
+      :P5_FROM9 := '01-03-'||Vyear;
+      :P5_TO9 := '31-03-'||Vyear;
+--    'April'
+      :P5_MONTH10 := 'April';
+      :P5_FROM10 := '01-04-'||Vyear;
+      :P5_TO10 := '30-04-'||Vyear;
+--    'May'
+      :P5_MONTH11 := 'May';
+      :P5_FROM11 := '01-05-'||Vyear;
+      :P5_TO11 := '31-05-'||Vyear;
+--    'June'
+      :P5_MONTH12 := 'June';
+      :P5_FROM12 := '01-06-'||Vyear;
+      :P5_TO12 := '30-06-'||Vyear;
+   end if;
+end;

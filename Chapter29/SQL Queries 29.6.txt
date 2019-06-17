@@ -1,0 +1,36 @@
+SELECT null, accounttitle, previousyear FROM gl_dashboard 
+WHERE userid=:APP_USER AND srno BETWEEN 1 AND 11 
+ORDER BY srno
+
+
+SELECT null, accounttitle, currentyear, previousyear 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=1
+
+
+SELECT null, accounttitle, currentyear, previousyear 
+FROM gl_dashboard WHERE userid=:APP_USER AND 
+(srno=3 or srno=8 or srno=9 or srno=10)
+
+
+SELECT null, accounttitle, current_year, previous_year 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=50
+
+SELECT null, accounttitle, current_year, previous_year 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=52
+
+
+SELECT null, accounttitle, current_year, previous_year 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=53
+
+
+SELECT null, accounttitle, current_year, previous_year 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=60
+
+
+SELECT null, accounttitle, current_year, previous_year 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=62
+
+
+SELECT null, accounttitle, current_year, previous_year 
+FROM gl_dashboard WHERE userid=:APP_USER AND srno=63
+

@@ -1,0 +1,10 @@
+declare
+   VdbCOAcode varchar2(11);
+begin
+   select COAcode into VdbCOAcode from gl_coa where ROWID=:P16_ROWID;
+   if :P16_COAcode <> VdbCOAcode then
+      return false;
+   else
+      return true;
+   end if;
+end;

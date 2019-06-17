@@ -1,0 +1,3 @@
+SELECT coacode||'-'||coatitle d, coacode r FROM gl_coa 
+WHERE  coalevel=4 and cocode=(SELECT cocode from gl_users WHERE userid = :APP_USER) 
+ORDER BY coacode

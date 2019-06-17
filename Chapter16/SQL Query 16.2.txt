@@ -1,0 +1,1 @@
+select * from gl_tran_master where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and createdon between :P94_FROM and :P94_TO and vchverified=:P94_CRITERION and closing=0 order by vchdate

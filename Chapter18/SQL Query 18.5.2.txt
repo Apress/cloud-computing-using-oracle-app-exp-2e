@@ -1,0 +1,1 @@
+SELECT vchdescription FROM gl_tran_master WHERE vchdate=:P44_VCHDATE and vchcode=:P44_VCHCODE and vchno=:P44_VCHNO

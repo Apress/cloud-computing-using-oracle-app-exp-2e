@@ -1,0 +1,13 @@
+declare
+   Vmonthclosed number := 0;
+   Verrortext varchar2(100);
+begin
+   select month_closed into Vmonthclosed from gl_fiscal_year 
+   where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and
+         coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and
+         comonthid=:P96_COMONTH;
+   if Vmonthclosed = 1 THEN
+      Verrortext := 'Cannot proceed with this process because the selected month is already marked as closed';
+   end if;
+   return rtrim(Verrortext);
+end;

@@ -1,0 +1,8 @@
+declare
+   Verrortext varchar2(100);
+begin
+   if :P56_USERID is null and :P56_USERID2 is null THEN
+      Verrortext := 'No user selected for the reset password process';
+   end if;
+   return rtrim(Verrortext);
+end;

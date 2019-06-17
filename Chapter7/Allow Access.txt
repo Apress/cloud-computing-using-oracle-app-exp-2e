@@ -1,0 +1,23 @@
+declare
+   VrecordExist number := 0;
+   Vallow varchar2(1);
+   Vsegmenttype varchar2(4);
+   Vpageid number;
+   Vitemrole varchar2(10);
+begin
+   select count(*) into VrecordExist from gl_groups_detail where groupID=:P21_GROUPID1 and segmentID=:P21_SELECTED_NODE;
+   if VrecordExist = 1 then
+      select allow_access into Vallow from gl_groups_detail where groupID=:P21_GROUPID1 and segmentID=:P21_SELECTED_NODE;
+      if Vallow='Y' then
+         Vallow := 'N';
+      else
+         Vallow := 'Y';
+      end if;
+      update gl_groups_detail set allow_access=Vallow where groupID=:P21_GROUPID1 and segmentID=:P21_SELECTED_NODE;
+      commit;
+   else
+      select segmenttype,pageid,itemrole into Vsegmenttype,Vpageid,Vitemrole from gl_segments where segmentID=:P21_SELECTED_NODE;
+      insert into gl_groups_detail values (:P21_GROUPID1,:P21_SELECTED_NODE,null,Vsegmenttype,VpageID,Vitemrole,'N');
+      commit;
+   end if;
+end;

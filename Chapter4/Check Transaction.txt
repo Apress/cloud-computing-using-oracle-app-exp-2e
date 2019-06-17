@@ -1,0 +1,10 @@
+declare
+  l_count number;
+begin
+   select count(*) into l_count from gl_tran_master where cocode = :P5_COMPANIES;
+   if l_count > 0 then
+      return false;
+   else
+      return true;
+   end if;
+end;

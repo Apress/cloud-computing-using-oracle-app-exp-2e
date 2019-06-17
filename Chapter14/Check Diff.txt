@@ -1,0 +1,8 @@
+declare
+   Verrortext varchar2(60);
+begin 
+   if :P43_DIFF <> 0 then 
+      Verrortext := 'Cannot save unbalanced voucher. Difference = '||to_char(:P43_DIFF); 
+   end if; 
+   return rtrim(Verrortext); 
+end;

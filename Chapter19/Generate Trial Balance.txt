@@ -1,0 +1,84 @@
+DECLARE
+Vstartdate date;
+VcoacodeSearch varchar2(20);
+Vcoacode varchar2(11);
+Vcoatitle varchar2(50);
+Vcoalevel number;
+Vcctitle varchar2(25);
+Vcocode number;
+Vconame varchar2(50);
+Vopendr number;
+Vopencr number;
+VactivityDr number;
+VactivityCr number;
+VcumulativeDr number;
+VcumulativeCr number;
+VclosingBalDr number;
+VclosingBalCr number;
+VtotalOpenDr number;
+VtotalOpenCr number;
+VtotalActivityDr number;
+VtotalActivityCr number;
+VtotalClosingDr number;
+VtotalClosingCr number;
+cursor tb_cur is
+select coacode,coatitle,coalevel from gl_coa where coacode between :P73_ACCOUNTFROM and :P73_ACCOUNTTO and coalevel <= :P73_COALEVEL and cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) order by coacode;
+tb_rec tb_cur%ROWTYPE;
+BEGIN
+   delete from gl_trial_balance where upper(userid)=upper(:APP_USER);  -- delete existing TB of the current user
+   commit;
+   select cocode into Vcocode from gl_users where upper(userid)=upper(:APP_USER);
+   select coname into Vconame from gl_company where cocode=Vcocode;
+   select pfrom into Vstartdate from gl_fiscal_year where cocode=Vcocode and coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and comonthid=1;
+   for tb_rec in tb_cur loop
+      Vcoacode := tb_rec.coacode;
+      VcoacodeSearch := tb_rec.coacode||'%';
+      Vcoatitle := tb_rec.coatitle;
+      Vcoalevel := tb_rec.coalevel;
+      if :P73_CCCODE is null THEN
+         select sum(TD.vchdr) into Vopendr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate < Vstartdate;
+         select sum(TD.vchcr) into Vopencr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate < Vstartdate;  
+         select sum(TD.vchdr) into VactivityDr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate between Vstartdate and to_date(:P73_TBDATE,'DD-MON-YYYY') and TM.closing=0;
+         select sum(TD.vchcr) into VactivityCr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate between Vstartdate and to_date(:P73_TBDATE,'DD-MON-YYYY') and TM.closing=0;       
+      else
+         select cctitle into Vcctitle from gl_cost_center where cccode=:P73_CCCODE; -- Print CCTITLE on TB PDF
+         select sum(TD.vchdr) into Vopendr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate < Vstartdate and TD.cccode=:P73_CCCODE;
+         select sum(TD.vchcr) into Vopencr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate < Vstartdate and TD.cccode=:P73_CCCODE;    
+         select sum(TD.vchdr) into VactivityDr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate between Vstartdate and to_date(:P73_TBDATE,'DD-MON-YYYY') and TM.closing=0 and TD.cccode=:P73_CCCODE;
+         select sum(TD.vchcr) into VactivityCr from gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode like VcoacodeSearch and TM.cocode=Vcocode and TM.vchdate between Vstartdate and to_date(:P73_TBDATE,'DD-MON-YYYY') and TM.closing=0 and TD.cccode=:P73_CCCODE;
+      end if;
+      VcumulativeDr := nvl(VopenDr,0) + nvl(VactivityDr,0);
+      VcumulativeCr := nvl(VopenCr,0) + nvl(VactivityCr,0);
+      if VcumulativeDr > VcumulativeCr then
+         VclosingBalDr := VcumulativeDr - VcumulativeCr;
+         VclosingBalCr := 0;
+      elsif VcumulativeCr > VcumulativeDr then
+         VclosingBalDr := 0;
+         VclosingBalCr := VcumulativeCr - VcumulativeDr;
+      else
+         VclosingBalDr := 0;
+         VclosingBalCr := 0;
+      end if;
+     if Vopendr=Vopencr then -- Previous Year's balance is zero (Income/Expense)
+     insert into gl_trial_balance values (Vcoacode,Vcoatitle,Vcoalevel,0,0,VactivityDR,VactivityCR,VclosingBalDr,VclosingBalCr,Vconame,:P73_TBDATE,:P73_ACCOUNTFROM,:P73_ACCOUNTTO,:P73_CCCODE,Vcctitle,:P73_COALEVEL,upper(:APP_USER),0);
+     else
+     insert into gl_trial_balance values (Vcoacode,Vcoatitle,Vcoalevel,Vopendr,Vopencr,VactivityDR,VactivityCR,VclosingBalDr,VclosingBalCr,Vconame,:P73_TBDATE,:P73_ACCOUNTFROM,:P73_ACCOUNTTO,:P73_CCCODE,Vcctitle,:P73_COALEVEL,upper(:APP_USER),0);
+end if;
+      commit;
+   end loop;
+   select sum(opendr) into VtotalOpenDr from gl_trial_balance where upper(userid)=upper(:APP_USER) and coalevel=:P73_COALEVEL;
+   select sum(opencr) into VtotalOpenCr from gl_trial_balance where upper(userid)=upper(:APP_USER) and coalevel=:P73_COALEVEL;
+   select sum(activitydr) into VtotalActivityDr from gl_trial_balance where upper(userid)=upper(:APP_USER) and coalevel=:P73_COALEVEL;
+   select sum(activitycr) into VtotalActivityCr from gl_trial_balance where upper(userid)=upper(:APP_USER) and coalevel=:P73_COALEVEL;
+   select sum(closingdr) into VtotalClosingDr from gl_trial_balance where upper(userid)=upper(:APP_USER) and coalevel=:P73_COALEVEL;
+   select sum(closingcr) into VtotalClosingCr from gl_trial_balance where upper(userid)=upper(:APP_USER) and coalevel=:P73_COALEVEL;
+insert into gl_trial_balance (coatitle,coalevel,opendr,opencr,activitydr,activitycr,closingdr,closingcr,userid,grand_total) values ('GRAND TOTAL FOR LEVEL '||:P73_COALEVEL,:P73_COALEVEL,Vtotalopendr,Vtotalopencr,VtotalactivityDR,VtotalactivityCR,VtotalclosingDr,VtotalclosingCr,upper(:APP_USER),1);
+      commit;
+update gl_trial_balance set opendr=null where opendr=0; 
+update gl_trial_balance set opencr=null where opencr=0; 
+update gl_trial_balance set activitydr=null where activitydr=0; 
+update gl_trial_balance set activitycr=null where activitycr=0; 
+update gl_trial_balance set closingdr=null where closingdr=0; 
+update gl_trial_balance set closingcr=null where closingcr=0; 
+commit;
+END;

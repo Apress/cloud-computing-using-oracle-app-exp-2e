@@ -1,0 +1,3 @@
+update gl_fiscal_year set month_closed=1 
+where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and 
+coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and comonthid=:P96_COMONTH;

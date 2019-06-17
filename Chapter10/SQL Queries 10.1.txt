@@ -1,0 +1,20 @@
+SELECT coname, cocode FROM gl_company ORDER BY cocode
+
+SELECT cocode FROM gl_users 
+WHERE userid = :APP_USER
+
+SELECT DISTINCT(coyear) d, coyear r FROM gl_fiscal_year 
+WHERE cocode=:P30_COMPANY ORDER BY coyear
+
+SELECT coyear FROM gl_users 
+WHERE userid = :APP_USER
+
+SELECT DISTINCT(comonthname) d, comonthid r 
+FROM gl_fiscal_year WHERE cocode=:P30_COMPANY 
+ORDER BY comonthid
+
+SELECT comonthid FROM gl_users 
+WHERE userid = :APP_USER
+
+
+

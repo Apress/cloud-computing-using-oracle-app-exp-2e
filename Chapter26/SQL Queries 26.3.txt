@@ -1,0 +1,7 @@
+SELECT MIN(coacode) FROM gl_coa 
+WHERE coanature=:P75_COANATURE AND coalevel=4 AND cocode=:P75_COCODE
+
+
+SELECT MAX(coacode) FROM gl_coa 
+WHERE coanature=:P75_COANATURE AND coalevel=4 AND cocode=:P75_COCODE
+

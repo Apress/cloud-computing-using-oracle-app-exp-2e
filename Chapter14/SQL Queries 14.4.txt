@@ -1,0 +1,5 @@
+SELECT cocode FROM gl_users WHERE userid = :app_user
+
+SELECT coyear FROM gl_users WHERE userid = :app_user
+
+SELECT comonthid FROM gl_users WHERE userid = :app_user

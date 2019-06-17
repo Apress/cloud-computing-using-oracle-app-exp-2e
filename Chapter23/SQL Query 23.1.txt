@@ -1,0 +1,3 @@
+SELECT comonthname d, comonthid r FROM gl_fiscal_year 
+WHERE cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) AND coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) 
+ORDER BY comonthid

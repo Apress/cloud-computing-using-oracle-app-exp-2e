@@ -1,0 +1,4 @@
+<p>&nbsp&nbsp Before you proceed, make sure that:<br/>
+&nbsp&nbsp You have closed all 12 fiscal periods.<br/>
+&nbsp&nbsp You have executed Temporary Year End process recently to register latest closing entries.<br/>
+<b>&nbsp&nbsp Click Go to proceed!</b></p>

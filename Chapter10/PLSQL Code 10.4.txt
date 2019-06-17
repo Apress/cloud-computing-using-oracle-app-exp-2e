@@ -1,0 +1,2 @@
+UPDATE gl_users SET cocode=:P30_COMPANY, coyear=:P30_YEAR, comonthid=:P30_MONTH WHERE upper(userid)=upper(:APP_USER);
+

@@ -1,0 +1,21 @@
+declare
+   Vpfrom date;
+   Vpto date;
+   Vvoucherfound number := 0;
+   Verrortext varchar2(60);
+begin
+   select count(*) into Vvoucherfound from gl_tran_master where cocode=:P43_COCODE and coyear=:P43_COYEAR and comonthid=:P43_COMONTHID and vchcode=:P43_VCHCODE and vchno=:P43_VCHNO;
+   select pfrom,pto into Vpfrom,Vpto from gl_fiscal_year where cocode=:P43_COCODE and coyear=:P43_COYEAR and 
+
+comonthid=:P43_COMONTHID;
+   if Vvoucherfound > 0 and :request like 'CREATE%' THEN
+      Verrortext := 'Voucher already exist in the database';
+   end if;
+   if :P43_VCHDATE not between Vpfrom and Vpto then
+      Verrortext := 'Voucher date should fall between '||to_char(Vpfrom)||' and '||to_char(Vpto);
+   end if;
+   if :P43_VCHNO IS NULL or :P43_VCHNO <= 0 then 
+      Verrortext := 'Voucher number must be greater than zero';
+   end if;
+   return rtrim(Verrortext);
+end;

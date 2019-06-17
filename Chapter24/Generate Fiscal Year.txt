@@ -1,0 +1,47 @@
+declare
+   Vyearexist number := 0;
+   Vnextyear  number := 0;
+   Vcoyear    number := 0;
+   Vcocode    number := 0;
+   Vcomonthid number := 0;
+   Vcomonthname varchar2(9);
+   Vpfrom varchar2(11);
+   Vpto varchar2(11);
+   Vleapyear number;
+   Vprev_rec_year varchar2(4);
+   cursor fy_cur is
+   select * from gl_fiscal_year where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER));
+   fy_rec fy_cur%ROWTYPE;
+begin
+   select cocode, coyear+1, coyear+1, to_char(coyear) into Vcocode,Vcoyear,Vnextyear,Vprev_rec_year from gl_users where upper
+
+(userid)=upper(:APP_USER);
+   select count(*) into Vyearexist from gl_fiscal_year where cocode=(select cocode from gl_users where upper(userid)=upper
+
+(:APP_USER)) and coyear=Vcoyear;
+   if Vyearexist = 0 then -- New fiscal year not found
+      for fy_rec in fy_cur loop
+         Vcomonthid   := fy_rec.comonthid;
+         Vcomonthname := fy_rec.comonthname;
+         Vpfrom := substr(to_char(fy_rec.pfrom,'DD-MON-YYYY'),1,7)||Vnextyear;
+         Vpto   := substr(to_char(fy_rec.pto,'DD-MON-YYYY'),1,7)||Vnextyear;
+         if to_char(fy_rec.pfrom,'YYYY') <> Vprev_rec_year then
+            Vnextyear := Vnextyear + 1;
+            Vpfrom := substr(to_char(fy_rec.pfrom,'DD-MON-YYYY'),1,7)||Vnextyear;
+            Vpto   := substr(to_char(fy_rec.pto,'DD-MON-YYYY'),1,7)||Vnextyear;
+         end if;
+         if Vcomonthname = 'February' then
+            Vleapyear := mod(Vnextyear,4);
+            if Vleapyear = 0 then
+               Vpto := '29-FEB-'||Vnextyear; 
+            else 
+               Vpto := '28-FEB-'||Vnextyear; 
+            end if;
+         end if;
+         insert into gl_fiscal_year values (Vcocode,Vcoyear,Vcomonthid,Vcomonthname,to_date(Vpfrom,'DD-MON-YYYY'),to_date
+(Vpto,'DD-MON-YYYY'),0,0,0,null);
+         commit;
+         Vprev_rec_year := to_char(fy_rec.pfrom,'YYYY');
+      end loop; 
+   end if; 
+end;

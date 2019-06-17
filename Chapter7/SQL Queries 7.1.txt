@@ -1,0 +1,11 @@
+SELECT DISTINCT groupTitle d, groupID r 
+FROM gl_groups_master ORDER BY groupID
+
+
+SELECT groupTitle FROM gl_groups_master 
+WHERE groupID=:P21_GROUPID1
+
+
+SELECT MAX(groupID)+1 FROM gl_groups_master
+
+

@@ -1,0 +1,3 @@
+SELECT "SR_NO", "COCODE", "REMARKS", "COACODE", "VCHDR", "VCHCR", "RECONCILED"
+FROM "#OWNER#"."GL_BANKS_OS"
+WHERE cocode=(select cocode from gl_users where userid=:APP_USER) AND reconciled=0

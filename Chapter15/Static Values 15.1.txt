@@ -1,0 +1,1 @@
+STATIC:Voucher Number;TM.VCHNO,Account Code;TD.COACODE,Account Title;COA.COATITLE,Debit;TD.VCHDR,Credit;TD.VCHCR,Master Description;TM.VCHDESCRIPTION,Detail Description;TD.VCHDESCRIPTION,Reference;TD.VCHREFERENCE

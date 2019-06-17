@@ -1,0 +1,9 @@
+select userid d, userid r from gl_users
+
+SELECT 1 FROM gl_users 
+WHERE userid = :APP_USER AND admin = 'Y'   
+
+
+SELECT 1 FROM gl_users 
+WHERE userid = :APP_USER AND admin != 'Y'
+

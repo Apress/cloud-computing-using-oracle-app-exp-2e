@@ -1,0 +1,12 @@
+declare
+   Vreportfound number := 0;
+   Verrortext varchar2(60);
+begin
+   if :P18_EXISTINGNEW='NEW' then
+      select count(*) into Vreportfound from gl_fs_setup where cocode=:P18_COCODE and upper(reportcode)=upper(:P18_REPORTCODE2);
+      if Vreportfound > 0 THEN
+         Verrortext := 'Report Code already exists in the database';
+      end if;
+      return rtrim(Verrortext);
+   end if;
+end;

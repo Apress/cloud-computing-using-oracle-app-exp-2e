@@ -1,0 +1,10 @@
+declare
+   VchildFound number :=  0;
+begin
+   select count(*) into VchildFound from gl_coa where COAcode like :P16_COAcode||'%' and COAlevel > :P16_COAlevel and cocode=(select cocode from gl_users where upper(userid)=upper(:app_user));
+   if VchildFound > 0 then
+      return false;
+   else
+      return true;
+   end if;
+end;

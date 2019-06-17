@@ -1,0 +1,10 @@
+declare
+   VcoaRecords number := 0;
+   Verrortext varchar2(200);
+begin
+   select count(*) into VcoaRecords from gl_coa where cocode=:P54_TARGET;
+   if VcoaRecords > 0 THEN
+      Verrortext := 'Chart of accounts already exists for the target company';
+   end if;
+   return rtrim(Verrortext);
+end;

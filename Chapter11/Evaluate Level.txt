@@ -1,0 +1,7 @@
+if length(:P14_CCCODE) = 2 then
+   :P14_CCLEVEL := 1;
+elsif length(:P14_CCCODE) = 5 then
+   :P14_CCLEVEL := 2;
+else
+   :P14_CCLEVEL := 0;
+end if;

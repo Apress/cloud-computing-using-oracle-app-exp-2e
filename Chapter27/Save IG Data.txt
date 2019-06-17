@@ -1,0 +1,21 @@
+begin  
+     case :APEX$ROW_STATUS  
+     when 'C' then
+         if :P18_EXISTINGNEW='NEW' then   
+            insert into GL_FS_SETUP values (:P18_COCODE,:P18_REPORTCODE2,:P18_REPORTTITLE2,:FSACCOUNT,:ACCOUNTFROM,:ACCOUNTTO);  
+         end if;
+         if :P18_EXISTINGNEW='EXISTING' then   
+            insert into GL_FS_SETUP values (:P18_COCODE,:P18_REPORTCODE1,:P18_REPORTTITLE1,:FSACCOUNT, :ACCOUNTFROM,:ACCOUNTTO);  
+         end if;
+     when 'U' then  
+         update GL_FS_SETUP  
+            set FSACCOUNT = :FSACCOUNT, ACCOUNTFROM = :ACCOUNTFROM, ACCOUNTTO = :ACCOUNTTO 
+            where REPORTCODE=:P18_REPORTCODE1 and FSACCOUNT=:FSACCOUNT and ACCOUNTFROM=:ACCOUNTFROM and ACCOUNTTO=:ACCOUNTTO;  
+     when 'D' then  
+         delete GL_FS_SETUP 
+         where REPORTCODE=:P18_REPORTCODE1 and FSACCOUNT=:FSACCOUNT and ACCOUNTFROM=:ACCOUNTFROM and ACCOUNTTO=:ACCOUNTTO;  
+     end case;  
+end;  
+
+
+

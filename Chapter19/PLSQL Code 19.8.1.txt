@@ -1,0 +1,2 @@
+DELETE FROM gl_trial_balance WHERE nvl(opendr,0) = 0 AND nvl(opencr,0) = 0 AND nvl(activitydr,0) = 0 AND nvl(activitycr,0) = 0 AND nvl(closingdr,0) = 0 AND nvl(closingcr,0) = 0 AND upper(userid)=upper(:APP_USER);
+

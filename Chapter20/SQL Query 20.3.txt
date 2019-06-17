@@ -1,0 +1,2 @@
+SELECT cocode from gl_users 
+where userid=:APP_USER

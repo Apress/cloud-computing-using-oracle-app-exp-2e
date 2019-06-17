@@ -1,0 +1,15 @@
+begin 
+   case :APEX$ROW_STATUS 
+   when 'C' then 
+     insert into GL_TRAN_DETAIL (line_no,tran_no,cocode,coacode,cccode,vchdescription,vchdr,vchcr,vchreference,reconciled) 
+     values 
+     (null, :P43_TRAN_NO, :P43_COCODE, :COACODE, :CCCODE, :VCHDESCRIPTION, :VCHDR, :VCHCR, :VCHREFERENCE, :RECONCILED); 
+   when 'U' then  
+       update GL_TRAN_DETAIL  
+          set coacode  = :COACODE, cccode = :CCCODE, vchdescription = :VCHDESCRIPTION, vchdr = :VCHDR, vchcr = :VCHCR, vchreference = :VCHREFERENCE
+          where tran_no = :TRAN_NO and line_no = :LINE_NO;  
+   when 'D' then  
+       delete from GL_TRAN_DETAIL 
+       where tran_no = :TRAN_NO and line_no = :LINE_NO;  
+   end case;  
+end;  

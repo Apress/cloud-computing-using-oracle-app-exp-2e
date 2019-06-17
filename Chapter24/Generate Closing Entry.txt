@@ -1,0 +1,76 @@
+declare
+   VoldClosingEntry number;
+   Vtran_no number;
+   Vline_no number;
+   Vcoacode varchar2(11);
+   Vcocode number;
+   Vcoyear number;
+   Vvchdate date;
+   Vactivitydr number;
+   Vactivitycr number;
+   VnetDebit number;
+   VnetCredit number;
+   VcumulativeDebit number := 0;
+   VcumulativeCredit number := 0;
+   Vloss number;
+   Vprofit number;
+   cursor tye_cur is
+   select TD.coacode coacode, sum(TD.vchdr) activitydr, sum(TD.vchcr) activitycr from gl_coa coa, gl_tran_master TM, gl_tran_detail TD where TM.tran_no=TD.tran_no and TD.coacode=COA.coacode and coa.cocode=td.cocode and TM.cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and TM.coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and TM.closing=0 and COA.coanature in ('Revenue','Expenses') group by TD.coacode order by TD.coacode;
+   tye_rec tye_cur%ROWTYPE;
+begin
+  begin
+   select distinct(TM.tran_no) into VoldClosingEntry from gl_tran_master TM  where TM.cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and TM.coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and TM.closing=1;
+   delete from gl_tran_detail where tran_no=VoldClosingEntry;
+   delete from gl_tran_master where tran_no=VoldClosingEntry;
+   commit;
+   EXCEPTION
+      WHEN NO_DATA_FOUND then
+        VoldClosingEntry := 0;
+  end;
+  select gl_tran_master_seq.nextval into Vtran_no from dual;
+  select cocode,coyear,pto into Vcocode,Vcoyear,Vvchdate from gl_fiscal_year where cocode=(select cocode from gl_users where 
+upper(userid)=upper(:APP_USER)) and coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) and 
+
+comonthid=12;
+   insert into gl_tran_master values (Vtran_no,Vcocode,Vcoyear,12,:P93_VCHCODE,9999999999,Vvchdate,'Closing Entry',upper(:APP_USER),sysdate,'Y','Y',1);
+   commit;
+   for tye_rec in tye_cur loop
+      select gl_tran_detail_seq.nextval into Vline_no from dual;
+      Vcoacode := tye_rec.coacode;
+      Vactivitydr := tye_rec.activitydr;
+      Vactivitycr := tye_rec.activitycr;
+      if Vactivitydr > Vactivitycr then
+         VnetDebit := Vactivitydr - Vactivitycr;
+         VnetCredit := 0;
+         VcumulativeDebit := VcumulativeDebit + VnetDebit;
+      elsif Vactivitycr > Vactivitydr then
+         VnetCredit := Vactivitycr - Vactivitydr;
+         VnetDebit := 0;
+         VcumulativeCredit := VcumulativeCredit + VnetCredit;
+      else
+         VnetDebit := 0;
+         VnetCredit := 0;
+      end if;
+      if VnetDebit > 0 or VnetCredit > 0 then
+         insert into gl_tran_detail values (Vline_no,Vtran_no,Vcocode,Vcoacode,null,'Closing Entry',VnetCredit,VnetDebit,null,0);
+         commit;
+      end if;
+   end loop;
+   select gl_tran_detail_seq.nextval into Vline_no from dual;
+   if VcumulativeDebit > VcumulativeCredit then
+      Vloss := VcumulativeDebit - VcumulativeCredit;
+      Vprofit := 0;
+   elsif VcumulativeCredit > VcumulativeDebit then
+      Vloss := 0;
+      Vprofit := VcumulativeCredit - VcumulativeDebit;
+   else
+      Vloss := 0;
+      Vprofit := 0;
+   end if;
+   if Vloss > 0 or Vprofit > 0 then
+      insert into gl_tran_detail values (Vline_no,Vtran_no,Vcocode,:P93_PLACCOUNT,null,'Closing Entry',Vloss,Vprofit,null,0);
+      commit;
+   end if;
+   update gl_fiscal_year set TYE_Executed=SYSDATE where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER));
+   commit;
+end;

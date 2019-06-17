@@ -1,0 +1,34 @@
+Select 
+CO.coname, 
+TM.Vchcode,
+VCH.Vchtitle,
+TM.Vchno,
+TM.Vchdate,
+TM.Vchdescription,
+TM.createdby,
+TM.createdon,
+TD.line_no,
+TD.COAcode,
+COA.COAtitle,
+TD.CCCode,
+CC.CCTitle,
+TD.Vchdr,
+TD.Vchcr,
+TD.Vchreference,
+(SELECT TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS') FROM DUAL) NOW 
+From GL_COMPANY CO, GL_VOUCHER VCH, GL_COA COA, GL_COST_CENTER CC, GL_TRAN_MASTER TM, GL_TRAN_DETAIL TD 
+Where 
+TM.VCHDATE = TO_DATE(:P44_VCHDATE,'DD-MON-YYYY') and
+TM.VCHCODE = TO_NUMBER(:P44_VCHCODE) and
+TM.VCHNO = TO_NUMBER(:P44_VCHNO) and
+TM.cocode=(select cocode from GL_USERS where upper(userid)=upper(:APP_USER)) AND
+TM.cocode=CO.cocode AND
+TM.tran_no=TD.tran_no AND 
+TM.Vchcode=VCH.Vchcode AND 
+TD.cocode=COA.cocode AND
+TD.COAcode=COA.COAcode AND 
+TD.CCCode=CC.CCCode(+)
+ORDER BY VCHCODE,VCHNO,LINE_NO
+
+/* The two conversion functions (TO_DATE and TO_NUMBER) are used in the above statment because you're NOT referencing table columns here, but rather you are referencing text items on the page. If not used, no data will be retrieved.*/
+

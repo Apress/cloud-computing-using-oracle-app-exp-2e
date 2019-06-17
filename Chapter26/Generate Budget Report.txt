@@ -1,0 +1,155 @@
+DECLARE
+Vactual    number := 0;
+Vbudget    number := 0;
+Vvariance  number := 0;
+Vpercent   number := 0;
+Vstatus    varchar2(1);
+Vpfrom     date;
+Vpto       date;
+Vcoacode   varchar2(11);
+Vcoatitle  varchar2(50);
+Vcoanature varchar2(11);
+Vtotalbudget number := 0;
+Vtotalactual number := 0;
+Vtotalvariance number := 0;
+Vtotalpercent number := 0;
+VnetStatus varchar2(1);
+Vconame varchar2(50);
+VmonthName1 varchar2(9);
+VmonthName2 varchar2(9);
+VprintedOn timestamp;
+
+cursor budget_cur is
+select * from gl_budget where coacode between :P75_ACCOUNTFROM and :P75_ACCOUNTTO and cocode=:P75_COCODE and
+coyear=:P75_COYEAR order by coacode;
+budget_rec budget_cur%ROWTYPE;
+BEGIN
+   delete from gl_budget_report where upper(userid)=upper(:APP_USER);
+   commit;
+   select coname into Vconame from gl_company where cocode=:P75_COCODE;
+   select comonthname into VmonthName1 from gl_fiscal_year where cocode=:P75_COCODE and coyear=:P75_COYEAR and
+comonthid=:P75_MONTHFROM;
+   select comonthname into VmonthName2 from gl_fiscal_year where cocode=:P75_COCODE and coyear=:P75_COYEAR and
+comonthid=:P75_MONTHTO;
+   select SYSDATE into VprintedOn FROM DUAL; 
+   for budget_rec in budget_cur loop
+      Vcoacode := budget_rec.coacode;
+      Vcoanature := budget_rec.coanature;
+      if :P75_MONTHFROM = :P75_MONTHTO THEN
+         select pfrom,pto into Vpfrom,Vpto from gl_fiscal_year where cocode=:P75_COCODE and coyear=:P75_COYEAR and
+comonthid=:P75_MONTHFROM;
+         Vbudget := 0;
+         if :P75_MONTHFROM=1 then
+            Vbudget := nvl(budget_rec.budget_amount1,0);
+         elsif :P75_MONTHFROM=2 then
+            Vbudget := nvl(budget_rec.budget_amount2,0);
+         elsif :P75_MONTHFROM=3 then
+            Vbudget := nvl(budget_rec.budget_amount3,0);
+         elsif :P75_MONTHFROM=4 then
+            Vbudget := nvl(budget_rec.budget_amount4,0);
+         elsif :P75_MONTHFROM=5 then
+            Vbudget := nvl(budget_rec.budget_amount5,0);
+         elsif :P75_MONTHFROM=6 then
+            Vbudget := nvl(budget_rec.budget_amount6,0);
+         elsif :P75_MONTHFROM=7 then
+            Vbudget := nvl(budget_rec.budget_amount7,0);
+         elsif :P75_MONTHFROM=8 then
+            Vbudget := nvl(budget_rec.budget_amount8,0);
+         elsif :P75_MONTHFROM=9 then
+            Vbudget := nvl(budget_rec.budget_amount9,0);
+         elsif :P75_MONTHFROM=10 then
+            Vbudget := nvl(budget_rec.budget_amount10,0);
+         elsif :P75_MONTHFROM=11 then
+            Vbudget := nvl(budget_rec.budget_amount11,0);
+         else 
+            Vbudget := nvl(budget_rec.budget_amount12,0);
+         end if;
+      end if;
+      if :P75_MONTHTO > :P75_MONTHFROM THEN
+         select pfrom into Vpfrom from gl_fiscal_year where cocode=:P75_COCODE and coyear=:P75_COYEAR and
+comonthid=:P75_MONTHFROM;
+         select pto into Vpto from gl_fiscal_year where cocode=:P75_COCODE and coyear=:P75_COYEAR and comonthid=:P75_MONTHTO;
+         Vbudget := 0;
+         for J in :P75_MONTHFROM .. :P75_MONTHTO loop
+            if J=1 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount1,0); 
+            elsif J=2 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount2,0); 
+            elsif J=3 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount3,0); 
+            elsif J=4 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount4,0); 
+            elsif J=5 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount5,0); 
+            elsif J=6 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount6,0); 
+            elsif J=7 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount7,0); 
+            elsif J=8 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount8,0); 
+            elsif J=9 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount9,0); 
+            elsif J=10 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount10,0); 
+            elsif J=11 then
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount11,0); 
+            else
+               Vbudget := Vbudget + nvl(budget_rec.budget_amount12,0); 
+            end if;
+         end loop;
+      end if;
+      if :P75_COANATURE='Assets' or :P75_COANATURE='Expenses' then 
+         select sum(TD.vchdr)-sum(TD.vchcr) into Vactual
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=:P75_COCODE and 
+                TD.coacode=Vcoacode and
+                TM.vchdate between Vpfrom and Vpto;
+      end if;
+      if :P75_COANATURE='Capital' or :P75_COANATURE='Liabilities' or :P75_COANATURE='Revenue' then 
+         select sum(TD.vchcr)-sum(TD.vchdr) into Vactual
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=:P75_COCODE and 
+                TD.coacode=Vcoacode and
+                TM.vchdate between Vpfrom and Vpto;
+      end if;
+      select coatitle into Vcoatitle from gl_coa where coacode=Vcoacode and cocode=:P75_COCODE;
+      Vvariance := Vbudget - Vactual;
+      if Vbudget > 0 then  		-- avoid zero division error
+         Vpercent := (Vvariance/Vbudget) * 100;
+      else
+         Vpercent := 0;
+      end if; 
+      if Vbudget > Vactual then
+         Vstatus := 'U';
+      end if;
+      if Vactual > Vbudget then
+         Vstatus := 'O';
+      end if;
+      if nvl(Vactual,0) = nvl(Vbudget,0) then
+         Vstatus := '-';
+      end if;
+      insert into gl_budget_report values (Vcoacode,Vcoatitle,nvl(Vbudget,0),nvl(Vactual,0),nvl(Vvariance,0),nvl
+(Vpercent,0),Vstatus,upper(:APP_USER),0,Vconame,:P75_ACCOUNTFROM, :P75_ACCOUNTTO,VmonthName1,VmonthName2,VprintedOn);
+      commit;
+   end loop;
+   select sum(budget) into Vtotalbudget from gl_budget_report where upper(userid)=upper(:APP_USER);
+   select sum(actual) into Vtotalactual from gl_budget_report where upper(userid)=upper(:APP_USER);
+   select sum(variance) into Vtotalvariance from gl_budget_report where upper(userid)=upper(:APP_USER);
+   if Vtotalbudget > 0 then            -- avoid zero division error
+      Vtotalpercent := (Vtotalvariance/Vtotalbudget) * 100;
+   end if; 
+   if Vtotalbudget > Vtotalactual then
+      Vnetstatus := 'U';
+   end if;
+   if Vtotalactual > Vtotalbudget then
+      Vnetstatus := 'O';
+   end if;
+   insert into gl_budget_report values (' ','GRAND TOTAL',nvl(Vtotalbudget,0),nvl(Vtotalactual,0),nvl(Vtotalvariance,0),nvl
+
+(Vtotalpercent,0),Vnetstatus,upper(:APP_USER),1,Vconame,:P75_ACCOUNTFROM, :P75_ACCOUNTTO,VmonthName1,VmonthName2,VprintedOn);
+   commit;
+END;

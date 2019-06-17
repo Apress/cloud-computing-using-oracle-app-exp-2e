@@ -1,0 +1,2 @@
+update gl_tran_master set vchverified='Y' where tran_no=:P95_TRAN_NO;
+

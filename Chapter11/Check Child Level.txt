@@ -1,0 +1,10 @@
+declare
+   VchildFound number :=  0;
+begin
+   select count(*) into VchildFound from gl_cost_center where CCcode like :P14_CCcode||'%' and CClevel > :P14_CClevel and cocode=(select cocode from gl_users where upper(userid)=upper(:app_user));
+   if VchildFound > 0 then
+      return false;
+   else
+      return true;
+   end if;
+end;

@@ -1,0 +1,1 @@
+delete from gl_coa where rowid = :P16_ROWID;

@@ -1,0 +1,15 @@
+declare
+   Vvouchersfound number := 0;
+   Verrortext varchar2(100);
+begin
+   select count(*) into Vvouchersfound from gl_tran_master VM where VM.VchCode=:P71_VCHCODE AND 
+VM.Vchdate between :P71_VCHDATEFROM and :P71_VCHDATETO AND 
+VM.createdon between :P71_CREATEDFROM and :P71_CREATEDTO AND
+VM.vchno BETWEEN :P71_VCHNOFROM and :P71_VCHNOTO AND
+upper(VM.createdby)=upper(:P71_USERID) AND
+VM.cocode=(select cocode from GL_USERS where upper(userid)=upper(:APP_USER));
+   if Vvouchersfound <= 0 THEN
+      Verrortext := 'No data found for the given criteria';
+   end if;
+   return rtrim(Verrortext);
+end;

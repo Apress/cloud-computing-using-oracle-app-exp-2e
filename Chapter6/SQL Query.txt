@@ -1,0 +1,1 @@
+SELECT segmentTitle||' ('||segmentType||')' d, segmentID r FROM gl_segments WHERE segmentType != 'Item' ORDER BY pageID,segmentID,segmentParent

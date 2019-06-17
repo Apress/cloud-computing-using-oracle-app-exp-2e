@@ -1,0 +1,1 @@
+DELETE FROM gl_fiscal_year WHERE cocode=:P5_COMPANIES AND coyear=:P5_YEAR;

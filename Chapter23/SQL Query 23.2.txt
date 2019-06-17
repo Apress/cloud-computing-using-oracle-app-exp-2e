@@ -1,0 +1,3 @@
+SELECT VCH.vchtype, TM.vchdate, TM.vchno, TM.vchdescription 
+FROM gl_voucher VCH, gl_tran_master TM 
+WHERE vchverified='N' AND VCH.vchcode=TM.vchcode AND cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) AND coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER)) AND  comonthid=:P96_COMONTH

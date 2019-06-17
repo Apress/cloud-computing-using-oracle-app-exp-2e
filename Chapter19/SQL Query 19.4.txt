@@ -1,0 +1,1 @@
+select * from gl_trial_balance where userid=:APP_USER order by coacode

@@ -1,0 +1,26 @@
+declare
+Vcocode number;
+begin
+   select cocode into Vcocode from gl_users where upper(userid)=upper(:APP_USER);
+   if :P16_ROWID is null then -- New Record
+      if :P16_COAlevel = 1 then -- Group Level 1
+         insert into gl_coa values (Vcocode,:P16_COAcode,:P16_COAtitle,:P16_COAlevel,:P16_COAnature,null,null);
+      elsif :P16_COAlevel = 2 or :P16_COAlevel = 3 then -- Group Levels (2 and 3)
+         insert into gl_coa values (Vcocode,:P16_COAcode,:P16_COAtitle,:P16_COAlevel,:P16_nature_display,null,null);
+      else  -- 4th Level
+         insert into gl_coa values
+(Vcocode,:P16_COAcode,:P16_COAtitle,:P16_COAlevel,:P16_nature_display,:P16_COAtype,:P16_CCcode);
+      end if;      
+   else  -- Record being edited
+      if :P16_COAlevel = 1 then -- Group Levels 1
+         update gl_coa set COAtitle=:P16_COAtitle, COAlevel=:P16_COAlevel, COAnature=:P16_COAnature where
+ROWID=:P16_ROWID;
+      elsif :P16_COAlevel = 2 or :P16_COAlevel = 3 then -- Group Levels (2 and 3)
+         update gl_coa set COAtitle=:P16_COAtitle, COAlevel=:P16_COAlevel, COAnature=:P16_nature_display where 
+ROWID=:P16_ROWID;
+      else  -- 4th Level
+         update gl_coa set COAtitle=:P16_COAtitle, COAlevel=:P16_COAlevel, COAnature=:P16_nature_display, 
+COAtype=:P16_COAtype, CCcode=:P16_CCcode where ROWID=:P16_ROWID;
+      end if;
+   end if;
+end;

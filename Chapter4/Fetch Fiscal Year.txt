@@ -1,0 +1,114 @@
+declare
+   Vrecords number;
+   CURSOR fiscal_year_cur IS SELECT * FROM gl_fiscal_year WHERE cocode = :P5_COMPANIES and initial_year=1 order by comonthid;
+   fiscal_year_rec fiscal_year_cur%ROWTYPE;
+begin
+   select count(*) into Vrecords from gl_fiscal_year where cocode=:P5_COMPANIES and initial_year=1;
+if Vrecords > 0 then
+   FOR fiscal_year_rec IN fiscal_year_cur LOOP
+      if fiscal_year_rec.comonthid=1 then
+         :P5_YEAR := fiscal_year_rec.coyear;
+         :P5_MONTH := fiscal_year_rec.comonthname;
+         :P5_INITIAL_YEAR := fiscal_year_rec.initial_year;
+         :P5_MONTH1 := fiscal_year_rec.comonthname;
+         :P5_FROM1 := fiscal_year_rec.pfrom;
+         :P5_TO1 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=2 then
+         :P5_MONTH2 := fiscal_year_rec.comonthname;
+         :P5_FROM2 := fiscal_year_rec.pfrom;
+         :P5_TO2 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=3 then
+         :P5_MONTH3 := fiscal_year_rec.comonthname;
+         :P5_FROM3 := fiscal_year_rec.pfrom;
+         :P5_TO3 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=4 then
+         :P5_MONTH4 := fiscal_year_rec.comonthname;
+         :P5_FROM4 := fiscal_year_rec.pfrom;
+         :P5_TO4 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=5 then
+         :P5_MONTH5 := fiscal_year_rec.comonthname;
+         :P5_FROM5 := fiscal_year_rec.pfrom;
+         :P5_TO5 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=6 then
+         :P5_MONTH6 := fiscal_year_rec.comonthname;
+         :P5_FROM6 := fiscal_year_rec.pfrom;
+         :P5_TO6 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=7 then
+         :P5_MONTH7 := fiscal_year_rec.comonthname;
+         :P5_FROM7 := fiscal_year_rec.pfrom;
+         :P5_TO7 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=8 then
+         :P5_MONTH8 := fiscal_year_rec.comonthname;
+         :P5_FROM8 := fiscal_year_rec.pfrom;
+         :P5_TO8 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=9 then
+         :P5_MONTH9 := fiscal_year_rec.comonthname;
+         :P5_FROM9 := fiscal_year_rec.pfrom;
+         :P5_TO9 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=10 then
+         :P5_MONTH10 := fiscal_year_rec.comonthname;
+         :P5_FROM10 := fiscal_year_rec.pfrom;
+         :P5_TO10 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=11 then
+         :P5_MONTH11 := fiscal_year_rec.comonthname;
+         :P5_FROM11 := fiscal_year_rec.pfrom;
+         :P5_TO11 := fiscal_year_rec.pto;
+      end if;
+      if fiscal_year_rec.comonthid=12 then
+         :P5_MONTH12 := fiscal_year_rec.comonthname;
+         :P5_FROM12 := fiscal_year_rec.pfrom;
+         :P5_TO12 := fiscal_year_rec.pto;
+      end if;
+   END LOOP;
+else
+   :P5_YEAR := NULL;
+   :P5_INITIAL_YEAR := NULL;
+   :P5_MONTH := NULL;
+   :P5_MONTH1 := NULL;
+   :P5_FROM1 := NULL;
+   :P5_TO1 := NULL;
+   :P5_MONTH2 := NULL;
+   :P5_FROM2 := NULL;
+   :P5_TO2 := NULL;
+   :P5_MONTH3 := NULL;
+   :P5_FROM3 := NULL;
+   :P5_TO3 := NULL;
+   :P5_MONTH4 := NULL;
+   :P5_FROM4 := NULL;
+   :P5_TO4 := NULL;
+   :P5_MONTH5 := NULL;
+   :P5_FROM5 := NULL;
+   :P5_TO5 := NULL;
+   :P5_MONTH6 := NULL;
+   :P5_FROM6 := NULL;
+   :P5_TO6 := NULL;
+   :P5_MONTH7 := NULL;
+   :P5_FROM7 := NULL;
+   :P5_TO7 := NULL;
+   :P5_MONTH8 := NULL;
+   :P5_FROM8 := NULL;
+   :P5_TO8 := NULL;
+   :P5_MONTH9 := NULL;
+   :P5_FROM9 := NULL;
+   :P5_TO9 := NULL;
+   :P5_MONTH10 := NULL;
+   :P5_FROM10 := NULL;
+   :P5_TO10 := NULL;
+   :P5_MONTH11 := NULL;
+   :P5_FROM11 := NULL;
+   :P5_TO11 := NULL;
+   :P5_MONTH12 := NULL;
+   :P5_FROM12 := NULL;
+   :P5_TO12 := NULL;
+end if;
+end;

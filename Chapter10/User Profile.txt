@@ -1,0 +1,10 @@
+declare
+   Vconame varchar2(50);
+   vcoyear number;
+   vcomonthname varchar2(9);
+   Vuserprofile varchar2(100);
+begin
+   select distinct c.coname,f.comonthname,u.coyear into vconame,vcomonthname,vcoyear from gl_company c, gl_users u, gl_fiscal_year f where  c.cocode=u.cocode and c.cocode=f.cocode and f.comonthid=u.comonthid and upper(u.userid)=upper(:APP_USER);
+   Vuserprofile := trim(Vconame)||' '||trim(Vcomonthname)||', '||Vcoyear;
+   return Vuserprofile;
+end;

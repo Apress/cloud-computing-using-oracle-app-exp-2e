@@ -1,0 +1,17 @@
+Step 4
+======
+Select CO.coname, VM.Vchcode,VCH.Vchtitle,VM.Vchno,VM.Vchdate, VM.Vchdescription,VM.createdby,VM.createdon,VD.line_no,VD.COAcode, COA.COAtitle,VD.CCCode,CC.CCTitle,VD.Vchdr,VD.Vchcr,VD.Vchreference,
+(SELECT TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS') FROM DUAL) NOW 
+From GL_COMPANY CO, GL_VOUCHER VCH, GL_COA COA, GL_COST_CENTER CC, 
+GL_TRAN_MASTER VM, GL_TRAN_DETAIL VD
+Where VM.cocode=CO.cocode AND VM.tran_no=VD.tran_no AND VM.Vchcode=VCH.Vchcode AND VD.cocode=COA.cocode AND VD.COAcode=COA.COAcode AND VD.CCCode=CC.CCCode(+)
+ORDER BY VCHCODE,VCHNO,LINE_NO
+
+
+
+Step 12
+=======
+Select CO.coname, VM.Vchcode,VCH.Vchtitle,VM.Vchno,VM.Vchdate,VM.Vchdescription, VM.createdby,VM.createdon, VD.line_no,VD.COAcode,COA.COAtitle,VD.CCCode,CC.CCTitle, VD.Vchdr,VD.Vchcr,VD.Vchreference,(SELECT TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS') FROM DUAL) NOW 
+From GL_COMPANY CO, GL_VOUCHER VCH, GL_COA COA, GL_COST_CENTER CC, GL_TRAN_MASTER VM, GL_TRAN_DETAIL VD 
+Where VM.cocode=CO.cocode AND VM.tran_no=VD.tran_no AND VM.Vchcode=VCH.Vchcode AND VD.cocode=COA.cocode AND VD.COAcode=COA.COAcode AND VD.CCCode=CC.CCCode(+) AND VM.VchCode=$P{V_VCHCODE} AND VM.Vchdate between to_date($P{V_VCHDATEFROM},'DD-MM-YYYY') and to_date($P{V_VCHDATETO},'DD-MM-YYYY') AND VM.Createdon between to_date($P{V_CREATEDFROM},'DD-MM-YYYY') and to_date($P{V_CREATEDTO},'DD-MM-YYYY') AND VM.vchno BETWEEN $P{V_VCHNOFROM} and $P{V_VCHNOTO}  AND upper(VM.createdby)=upper( $P{V_USERID})
+Order By VCHCODE,VCHNO,LINE_NO

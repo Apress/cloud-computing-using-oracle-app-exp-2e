@@ -1,0 +1,29 @@
+select coname, coacode, coatitle, tran_no, vchdate, vchtype,vchno, vchdescription, vchdr, vchcr, SUM (vchdr - vchcr) OVER ( partition by coacode ORDER BY coacode, vchdate, tran_no, vchno) as balance, (SELECT TO_CHAR(SYSDATE,'DD-MON-YYYY HH24:MI:SS') FROM DUAL) NOW, $P{FROM_DATE} FromDate,$P{TO_DATE} ToDate, $P{ACCOUNT_FROM} AccountFrom,$P{ACCOUNT_TO} Accountto
+FROM (SELECT  CO.coname, TD.coacode, COA.coatitle, 0 as tran_no, to_date($P{FROM_DATE},'DD-MON-YYYY') - 1 as vchdate
+          ,       '' as vchtype
+	      ,	      0 as vchno
+	      ,	      '<<< Opening Balance >>>' as Vchdescription
+	      ,	      sum(TD.vchdr) as vchdr
+	      ,	      sum(TD.vchcr) as vchcr
+	      ,	      1	AS grp
+	      FROM    gl_company CO, gl_coa COA, gl_voucher VCH, gl_tran_master TM, gl_tran_detail TD
+         where TM.vchdate < to_date($P{FROM_DATE}, 'DD-MON-YYYY') and TD.coacode=COA.coacode and TD.coacode >= $P{ACCOUNT_FROM} 
+and TD.coacode <= $P{ACCOUNT_TO} and TM.cocode=(select cocode from gl_users where upper(userid)=upper($P{USER_ID})) and 
+TM.tran_no=TD.tran_no and TM.vchcode=VCH.vchcode and TM.cocode=CO.cocode and COA.cocode=TM.cocode
+	      GROUP BY CO.coname, TD.coacode, COA.coatitle
+	      	      --
+		  UNION ALL
+		      --
+	     SELECT  CO.coname, TD.coacode, COA.coatitle, TM.tran_no, TM.vchdate
+	     ,	     VCH.vchtype
+	     ,	     TM.vchno
+	     ,	     TD.vchdescription
+	     ,	     TD.vchdr
+	     ,	     TD.vchcr
+	     ,	     2 AS grp
+	     FROM    gl_company CO, gl_coa COA, gl_voucher VCH, gl_tran_master TM, gl_tran_detail TD 
+             where TM.vchdate between to_date($P{FROM_DATE},'DD-MON-YYYY') and to_date($P{TO_DATE}, 'DD-MON-YYYY') and 
+TD.coacode=COA.coacode and TD.coacode >= $P{ACCOUNT_FROM} and TD.coacode <= $P{ACCOUNT_TO} and 
+TM.cocode=(select cocode from gl_users where upper(userid)=upper( $P{USER_ID} )) and TM.tran_no=TD.tran_no and 
+TM.vchcode=VCH.vchcode and TM.cocode=CO.cocode and COA.cocode=TM.cocode)
+ORDER BY vchdate,vchno

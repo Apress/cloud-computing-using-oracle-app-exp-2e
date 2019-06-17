@@ -1,0 +1,10 @@
+declare
+   Vutilized number := 0;
+   Verrortext varchar2(60);
+begin
+   select count(*) into Vutilized from gl_groups_detail where segmentId=:P20_SEGMENTID;
+   if Vutilized > 0 then
+      Verrortext := 'Cannot delete this segment because it is utilized';
+   end if;
+   return rtrim(Verrortext);
+end;

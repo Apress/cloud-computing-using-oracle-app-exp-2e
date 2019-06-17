@@ -1,0 +1,17 @@
+SELECT pfrom FROM gl_fiscal_year WHERE cocode=:P76_COCODE AND coyear=:P76_CURRENTYEAR AND comonthid=1
+
+
+SELECT pto FROM gl_fiscal_year 
+WHERE cocode=:P76_COCODE AND coyear=:P76_CURRENTYEAR AND comonthid=:P76_CURRENTMONTH
+
+
+SELECT pfrom FROM gl_fiscal_year WHERE cocode=:P76_COCODE AND coyear=:P76_CURRENTYEAR-1 AND comonthid=1
+
+
+SELECT pto FROM gl_fiscal_year WHERE cocode=:P76_COCODE AND coyear=:P76_CURRENTYEAR-1 AND comonthid=:P76_CURRENTMONTH
+
+
+SELECT comonthname FROM gl_fiscal_year 
+WHERE cocode=:P76_COCODE AND coyear=:P76_CURRENTYEAR AND comonthid=:P76_CURRENTMONTH
+
+

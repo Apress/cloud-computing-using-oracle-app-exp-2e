@@ -1,0 +1,21 @@
+var model = this.data.model;
+var dbKey = model.getFieldKey("VCHDR"); 
+var crKey = model.getFieldKey("VCHCR"); 
+var totDB = 0;
+var totCR = 0;
+
+model.forEach(function(record, index, id) {
+    var dbval = parseFloat(record[dbKey], 10); 
+    var crval = parseFloat(record[crKey], 10);
+    var metadata = model.getRecordMetadata(id);
+    if (!isNaN(dbval) && !metadata.deleted) {
+        totDB += dbval;
+    }
+    if (!isNaN(crval) && !metadata.deleted) {
+        totCR += crval;
+    }
+});
+
+$s('P43_TOTDR',totDB);
+$s('P43_TOTCR',totCR);
+$s('P43_DIFF',totDB - totCR);

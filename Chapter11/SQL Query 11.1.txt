@@ -1,0 +1,3 @@
+SELECT "ROWID", "CCCODE","CCTITLE","CCLEVEL"
+FROM  "#OWNER#"."GL_COST_CENTER" 
+WHERE cocode = (SELECT cocode FROM gl_users WHERE userid = :app_user)

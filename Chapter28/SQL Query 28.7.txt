@@ -1,0 +1,4 @@
+SELECT fsaccount, notescode, notestitle, currentbalance, previousbalance, percent 
+FROM gl_fs_report 
+WHERE upper(userid)=upper(:APP_USER) AND notes=1 AND fsaccount=:P77_FSACCOUNT 
+ORDER BY notescode

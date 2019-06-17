@@ -1,0 +1,31 @@
+declare
+   Vbudgetrecords number := 0;
+   Vcoacode varchar2(11);
+   Vbudget_amount1  number := 0;   
+   Vbudget_amount2  number := 0;   
+   Vbudget_amount3  number := 0;   
+   Vbudget_amount4  number := 0;   
+   Vbudget_amount5  number := 0;   
+   Vbudget_amount6  number := 0;   
+   Vbudget_amount7  number := 0;   
+   Vbudget_amount8  number := 0;   
+   Vbudget_amount9  number := 0;   
+   Vbudget_amount10 number := 0;   
+   Vbudget_amount11 number := 0;   
+   Vbudget_amount12 number := 0;   
+   cursor coa_cur is
+   select coacode from gl_coa where cocode=:P55_COCODE and coanature=:P55_COANATURE and coalevel=4 order by coacode;
+   coa_rec coa_cur%ROWTYPE;
+begin
+   select count(*) into Vbudgetrecords from gl_budget where cocode=:P55_COCODE and coyear=:P55_COYEAR and coanature=:P55_COANATURE;
+   if Vbudgetrecords = 0 then
+      for coa_rec in coa_cur loop
+         Vcoacode := coa_rec.coacode;
+         select budget_amount1,budget_amount2,budget_amount3,budget_amount4,budget_amount5,budget_amount6,budget_amount7,budget_amount8,budget_amount9,budget_amount10,budget_amount11,budget_amount12 into Vbudget_amount1,Vbudget_amount2,Vbudget_amount3,Vbudget_amount4,Vbudget_amount5,Vbudget_amount6,Vbudget_amount7,Vbudget_amount8,Vbudget_amount9,Vbudget_amount10,Vbudget_amount11,Vbudget_amount12 from gl_budget where cocode=:P55_COCODE and coyear=:P55_COYEAR-1 and coacode=Vcoacode;
+         insert into gl_budget values (:P55_COCODE,:P55_COYEAR,Vcoacode,:P55_COANATURE,null,Vbudget_amount1,Vbudget_amount2,Vbudget_amount3,Vbudget_amount4,Vbudget_amount5,Vbudget_amount6,Vbudget_amount7,Vbudget_amount8,Vbudget_amount9,Vbudget_amount10,Vbudget_amount11,Vbudget_amount12,2);
+         commit;
+      end loop;
+   end if;
+   EXCEPTION
+   WHEN NO_DATA_FOUND THEN null;
+end;

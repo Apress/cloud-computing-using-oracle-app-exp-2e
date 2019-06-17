@@ -1,0 +1,2 @@
+SELECT * FROM gl_reconcile_report 
+WHERE userid=:APP_USER ORDER BY srno

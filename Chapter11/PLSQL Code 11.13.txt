@@ -1,0 +1,1 @@
+DELETE FROM gl_cost_center WHERE CCcode=:P14_CCcode AND cocode=(SELECT cocode FROM gl_users WHERE userid = :app_user);

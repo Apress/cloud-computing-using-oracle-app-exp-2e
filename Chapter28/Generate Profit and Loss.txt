@@ -1,0 +1,519 @@
+-- Generate Profit and Loss Statement
+declare
+   VreportCode varchar2(4);
+   VreportTitle varchar2(50);
+   Vcocode number;
+   Vconame varchar2(50);
+   VcurrentYear number;
+   VpreviousYear number;
+   VcurrentFromDate date;
+   VcurrentToDate date;
+   Vcomonthname varchar2(9);
+   VpreviousFromDate date;
+   VpreviousToDate date;
+   VaccountFrom varchar2(11);
+   VaccountTo varchar2(11);
+   VcurrentSales number := 0;
+   VpreviousSales number := 0;
+   VcurrentOpeningStock number := 0;
+   VpreviousOpeningStock number := 0;
+   VcurrentClosingStock number := 0;
+   VpreviousClosingStock number := 0;
+   VcurrentCOG number := 0;
+   VpreviousCOG number := 0;
+   VcurrentGrossMargin number := 0;
+   VpreviousGrossMargin number := 0;
+   VcurrentAdmin number := 0;
+   VpreviousAdmin number := 0;
+   VcurrentSelling number := 0;
+   VPreviousSelling number := 0;
+   VcurrentFinancial number := 0;
+   VpreviousFinancial number := 0;
+   VcurrentProfitLoss number := 0;
+   VpreviousProfitLoss number := 0;
+   Vvariance number := 0;
+   Vpercent number := 0;
+   Vpercent2 number := 0;
+
+-- PL NOTES VARIABLES
+   Vcoacode varchar2(11);
+   vcoatitle varchar2(50);
+   VcurrentBalance number := 0;
+   VpreviousBalance number := 0;
+   Vsrno number := 0;  
+
+begin
+   delete from gl_fs_report where upper(userid)=upper(:APP_USER);
+   commit;
+   if :APP_PAGE_ID = 76 then -- Financial Statements Page
+      Vcocode := :P76_COCODE;
+      Vconame := :P76_CONAME;
+      VreportCode := :P76_REPORTCODE;
+      VcurrentFromDate := :P76_CURRENTFROMDATE;
+      VcurrentToDate := :P76_CURRENTTODATE;
+      VpreviousFromDate := :P76_PREVIOUSFROMDATE;
+      VpreviousToDate := :P76_PREVIOUSTODATE;
+      VcurrentYear := :P76_CURRENTYEAR;
+      Vcomonthname := :P76_COMONTHNAME;
+   elsif :APP_PAGE_ID = 1 then -- Desktop Dashboard
+      Vcocode := :P1_COCODE;
+      Vconame := null;
+      VreportCode := :P1_REPORTCODE;
+      VcurrentFromDate := :P1_CURRENTFROMDATE;
+      VcurrentToDate := :P1_CURRENTTODATE;
+      VpreviousFromDate := :P1_PREVIOUSFROMDATE;
+      VpreviousToDate := :P1_PREVIOUSTODATE;
+      VcurrentYear := :P1_CURRENTYEAR;
+      Vcomonthname := null;
+   else -- Mobile Home Page 6
+      Vcocode := :P6_COCODE;
+      Vconame := :P6_CONAME;
+      VreportCode := 'BS01';
+      VcurrentFromDate := :P6_CURRENTFROMDATE;
+      VcurrentToDate := :P6_CURRENTTODATE;
+      VpreviousFromDate := :P6_PREVIOUSFROMDATE;
+      VpreviousToDate := :P6_PREVIOUSTODATE;
+      VcurrentYear := :P6_CURRENTYEAR;
+      VcomonthName := :P6_COMONTHNAME;
+   end if;
+   select distinct reportTitle into VreportTitle from gl_fs_setup where cocode=Vcocode and reportCode=VreportCode;
+
+-- Compute Sales
+   Vpercent := 0;
+   select AccountFrom,AccountTo into VaccountFrom,VaccountTo from gl_fs_setup where cocode=Vcocode and fsaccount='Sales';
+   if VaccountFrom is not null and VaccountTo is not null then
+      select sum(TD.vchcr)-sum(TD.vchdr) into VcurrentSales    -- Current Year's Sales
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and
+             TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+      select sum(TD.vchcr)-sum(TD.vchdr) into VpreviousSales   -- Previous Year's Sales
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and 
+             TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+      Vvariance := nvl(VcurrentSales,0) - nvl(VpreviousSales,0);
+      if VpreviousSales <> 0 and VpreviousSales is not null then  -- ORA-01476: divisor is equal to zero
+         Vpercent := (Vvariance/VpreviousSales)*100;  
+      end if;
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,1,'Sales',nvl(VcurrentSales,0),nvl(VpreviousSales,0),nvl(Vpercent,0),upper
+(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,0,null,null,0);
+   commit;
+
+-- Compute Cost of Goods
+   Vpercent := 0;
+   select AccountFrom,AccountTo into VaccountFrom,VaccountTo from gl_fs_setup where cocode=Vcocode and fsaccount='Cost of Goods';
+   if VaccountFrom is not null and VaccountTo is not null then
+      select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentCOG    -- Current Year's Cost
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and
+             TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+      select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousCOG    -- Previous Year's Cost
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and 
+             TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+      Vvariance := nvl(VcurrentCOG,0) - nvl(VpreviousCOG,0);
+      if VpreviousCOG <> 0 and VpreviousCOG is not null then 
+         Vpercent := (Vvariance/VpreviousCOG)*100;  
+      end if;
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,3,'Cost of Goods',nvl(VcurrentCOG,0),nvl(VpreviousCOG,0),nvl
+(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,0,null,null,0);
+   commit;
+
+   VcurrentGrossMargin := nvl(VcurrentSales,0) - nvl(VcurrentCOG,0);
+   VpreviousGrossMargin := nvl(VpreviousSales,0) - nvl(VpreviousCOG,0);
+   Vvariance := nvl(VcurrentGrossMargin,0)-nvl(VpreviousGrossMargin,0);
+   if VpreviousGrossMargin <> 0 and VpreviousGrossMargin is not null then 
+      Vpercent := (Vvariance/VpreviousGrossMargin)*100;  
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,7,'.....Gross Margin',nvl(VcurrentGrossMargin,0), nvl(VpreviousGrossMargin,0),nvl(Vpercent,0),upper
+(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,1,0,0,null,null,0);
+   commit;
+
+-- Compute Administrative Expenses
+   Vpercent := 0;
+   select AccountFrom,AccountTo into VaccountFrom,VaccountTo from gl_fs_setup where cocode=Vcocode and fsaccount='Admin';
+   if VaccountFrom is not null and VaccountTo is not null then
+      select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentAdmin    -- Current Year's Admin Expenses
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and
+             TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+      select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousAdmin   -- Previous Year's Admin Expenses
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and 
+             TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+      Vvariance := nvl(VcurrentAdmin,0) - nvl(VpreviousAdmin,0);
+      if VpreviousAdmin <> 0 and VpreviousAdmin is not null then 
+         Vpercent := (Vvariance/VpreviousAdmin)*100;  
+      end if;
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,8,'Administrative Expenses',nvl(VcurrentAdmin,0),nvl(VpreviousAdmin,0),nvl
+(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,0,null,null,0);
+   commit;
+
+-- Compute Selling & Marketing Expenses
+   Vpercent := 0;
+   select AccountFrom,AccountTo into VaccountFrom,VaccountTo from gl_fs_setup where cocode=Vcocode and fsaccount='Selling';
+   if VaccountFrom is not null and VaccountTo is not null then
+      select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentSelling    -- Current Year's Selling Expenses
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and
+             TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+      select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousSelling   -- Previous Year's Selling Expenses
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and 
+             TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+      Vvariance := nvl(VcurrentSelling,0) - nvl(VpreviousSelling,0);
+      if VpreviousSelling <> 0 and VpreviousSelling is not null then 
+         Vpercent := (Vvariance/VpreviousSelling)*100;  
+      end if;
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,9,'Selling Expenses',nvl(VcurrentSelling,0),nvl(VpreviousSelling,0),nvl
+(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,0,null,null,0);
+   commit;
+
+-- Compute Financial Charges
+   Vpercent := 0;
+   select AccountFrom,AccountTo into VaccountFrom,VaccountTo from gl_fs_setup where cocode=Vcocode and fsaccount='Financial';
+   if VaccountFrom is not null and VaccountTo is not null then
+      select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentFinancial    -- Current Year's Financial Expenses
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and
+             TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+      select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousFinancial   -- Previous Year's Financial Expenses
+        from gl_tran_master TM, gl_tran_detail TD
+       where TM.cocode=TD.cocode and
+             TM.tran_no=TD.tran_no and
+             TM.cocode=Vcocode and 
+             TD.coacode between VaccountFrom and VaccountTo and 
+             TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+      Vvariance := nvl(VcurrentFinancial,0) - nvl(VpreviousFinancial,0);
+      if VpreviousFinancial <> 0 and VpreviousFinancial is not null then 
+         Vpercent := (Vvariance/VpreviousFinancial)*100;  
+      end if;
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,10,'Financial Charges',nvl(VcurrentFinancial,0),nvl(VpreviousFinancial,0),nvl
+(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,0,null,null,0);
+   commit;
+
+   VcurrentProfitLoss := nvl(VcurrentGrossMargin,0) - (nvl(VcurrentAdmin,0)+nvl(VcurrentSelling,0)+nvl(VcurrentFinancial,0));
+   VpreviousProfitLoss := nvl(VpreviousGrossMargin,0) - (nvl(VpreviousAdmin,0)+nvl(VpreviousSelling,0)+nvl(VpreviousFinancial,0));
+   Vvariance := nvl(VcurrentProfitLoss,0) - nvl(VpreviousProfitLoss,0);
+   if VpreviousProfitLoss <> 0 and VpreviousProfitLoss is not null then 
+      Vpercent := (Vvariance/VpreviousProfitLoss)*100;  
+   end if;
+   insert into gl_fs_report values (VreportCode,VreportTitle,11,'Net Profit/(Loss)',nvl(VcurrentProfitLoss,0),nvl(VpreviousProfitLoss,0),nvl
+(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,1,0,null,null,1);
+   commit;
+
+-- SALES NOTES
+   declare
+      cursor sales_cur is
+      select coacode,coatitle 
+      from gl_coa 
+      where coacode between (select accountfrom from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and
+      fsaccount='Sales') and (select accountto from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and
+      fsaccount='Sales') and coalevel=4 and cocode=Vcocode
+      order by coacode;
+      sales_rec sales_cur%ROWTYPE;
+   begin      
+      for sales_rec in sales_cur loop
+         Vcoacode := sales_rec.coacode;
+         Vcoatitle := sales_rec.coatitle;
+         select sum(TD.vchcr)-sum(TD.vchdr) into VcurrentBalance    -- Current Year's Sales
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+  
+         select sum(TD.vchcr)-sum(TD.vchdr) into VpreviousBalance   -- Previous Year's Sales
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+         Vvariance := nvl(VcurrentBalance,0) - nvl(VpreviousBalance,0);
+         if VpreviousBalance <> 0 and VpreviousBalance is not null then  
+            Vpercent := (Vvariance/VpreviousBalance)*100;  
+         end if;
+         insert into gl_fs_report values (VreportCode,VreportTitle,101,'Sales',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),nvl(Vpercent,0),upper
+(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+         commit;
+      end loop;
+   end;
+
+-- COST OF GOODS NOTES
+   declare 
+      cursor cog_cur is
+      select coacode,coatitle 
+      from gl_coa 
+      where coacode between (select accountfrom from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Cost of Goods') and (select accountto from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Cost of Goods') and coalevel=4 and cocode=Vcocode
+      order by coacode;
+      cog_rec cog_cur%ROWTYPE;
+   begin
+      for cog_rec in cog_cur loop
+         Vcoacode := cog_rec.coacode;
+         Vcoatitle := cog_rec.coatitle;
+         select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentBalance    -- Current Year's Cost
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+
+         select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousBalance    -- Previous Year's Cost
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+
+         Vvariance := nvl(VcurrentBalance,0) - nvl(VpreviousBalance,0);
+         if VpreviousBalance <> 0 and VpreviousBalance is not null then  
+            Vpercent := (Vvariance/VpreviousBalance)*100;  
+         end if;
+         insert into gl_fs_report values (VreportCode,VreportTitle,104,'Cost of Goods',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),nvl(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+         commit;
+      end loop;
+   end;
+
+
+-- ADMINISTRATIVE EXPENSES NOTES
+   declare
+      cursor admin_cur is
+      select coacode,coatitle 
+      from gl_coa 
+      where coacode between (select accountfrom from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Admin') and (select accountto from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Admin') and coalevel=4 and cocode=Vcocode
+      order by coacode;
+      admin_rec admin_cur%ROWTYPE;
+   begin
+      for admin_rec in admin_cur loop
+         Vcoacode := admin_rec.coacode;
+         Vcoatitle := admin_rec.coatitle;
+         select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentBalance    -- Current Year
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+
+         select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousBalance    -- Previous Year
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+
+         Vvariance := nvl(VcurrentBalance,0) - nvl(VpreviousBalance,0);
+         if VpreviousBalance <> 0 and VpreviousBalance is not null then  
+            Vpercent := (Vvariance/VpreviousBalance)*100;  
+         end if;
+         insert into gl_fs_report values (VreportCode,VreportTitle,108,'Administrative Expenses',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),nvl(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+         commit;
+      end loop;
+   end;
+
+
+-- SELLING EXPENSES NOTES
+   declare
+      cursor selling_cur is
+      select coacode,coatitle 
+      from gl_coa 
+      where coacode between (select accountfrom from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Selling') and (select accountto from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Selling') and coalevel=4 and cocode=Vcocode
+      order by coacode;
+      selling_rec selling_cur%ROWTYPE;
+   begin
+      for selling_rec in selling_cur loop
+         Vcoacode := selling_rec.coacode;
+         Vcoatitle := selling_rec.coatitle;
+         select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentBalance    -- Current Year
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+
+         select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousBalance   -- Previous Year
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=:P76_COCODE and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+
+         Vvariance := nvl(VcurrentBalance,0) - nvl(VpreviousBalance,0);
+         if VpreviousBalance <> 0 and VpreviousBalance is not null then  
+            Vpercent := (Vvariance/VpreviousBalance)*100;  
+         end if;
+         insert into gl_fs_report values (VreportCode,VreportTitle,109,'Selling Expenses',nvl(VcurrentBalance,0),nvl (VpreviousBalance,0),nvl(Vpercent,0),upper   (:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+         commit;
+      end loop;
+   end;
+
+-- FINANCIAL CHARGES
+   declare
+      cursor financial_cur is
+      select coacode,coatitle 
+      from gl_coa 
+      where coacode between (select accountfrom from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Financial') and (select accountto from gl_fs_setup where cocode=Vcocode and reportcode=VreportCode and fsaccount='Financial') and coalevel=4 and cocode=Vcocode
+      order by coacode;
+      financial_rec financial_cur%ROWTYPE;   
+   begin
+      for financial_rec in financial_cur loop
+         Vcoacode := financial_rec.coacode;
+         Vcoatitle := financial_rec.coatitle;
+         select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentBalance    -- Current Year
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VcurrentFromDate and VcurrentToDate and TM.closing=0;
+
+         select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousBalance   -- Previous Year
+           from gl_tran_master TM, gl_tran_detail TD
+          where TM.cocode=TD.cocode and
+                TM.tran_no=TD.tran_no and
+                TM.cocode=Vcocode and 
+                TD.coacode = Vcoacode and
+                TM.vchdate between VpreviousFromDate and VpreviousToDate and TM.closing=0;
+
+         Vvariance := nvl(VcurrentBalance,0) - nvl(VpreviousBalance,0);
+         if VpreviousBalance <> 0 and VpreviousBalance is not null then  
+            Vpercent := (Vvariance/VpreviousBalance)*100;  
+         end if;
+         insert into gl_fs_report values (VreportCode,VreportTitle,110,'Financial Charges',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),nvl(Vpercent,0),upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+         commit;
+      end loop;
+   end;
+
+-- P&L Account Balances For Desktop and Mobile Home pages
+   if :APP_PAGE_ID = 1 or :APP_PAGE_ID = 6 then -- Desktop dashboard or mobile home page
+      declare
+         VaccountTitle varchar2(50);
+         cursor pl_cur is
+         select srno,currentbalance,previousbalance 
+         from gl_fs_report 
+         where upper(userid)=upper(:APP_USER)
+         order by srno;
+         pl_rec pl_cur%ROWTYPE;
+      begin
+         delete from gl_dashboard where upper(userid)=upper(:APP_USER);
+         commit;
+         for pl_rec in pl_cur loop
+            Vsrno := pl_rec.srno;
+            VcurrentYear := pl_rec.currentBalance;
+            VpreviousYear := pl_rec.previousBalance;
+            if Vsrno=1 then
+               VaccountTitle := 'Sales';
+            elsif Vsrno=3 then
+               VaccountTitle := 'Cost of Goods';
+            elsif Vsrno=7 then
+               VaccountTitle := 'Gross Margin';
+            elsif Vsrno=8 then
+               VaccountTitle := 'Administrative Expenses';
+            elsif Vsrno=9 then
+               VaccountTitle := 'Selling Expenses';
+            elsif Vsrno=10 then
+               VaccountTitle := 'Financial Charges';
+            else
+               VaccountTitle := 'Net Profit/(Loss)';
+            end if;
+            insert into gl_dashboard values (Vsrno,VaccountTitle,VcurrentYear,VpreviousYear,upper(:APP_USER),null,null,null);
+            commit;
+         end loop;
+      end;
+
+-- P&L Ratio
+      declare
+         VcurrentGP number;
+         VpreviousGP number;
+         VcurrentNP number;
+         VpreviousNP number;
+         VcurrentOP number;
+         VpreviousOP number;
+         VcurrentGPratio number;
+         VpreviousGPratio number;
+         VcurrentOPratio number;
+         VpreviousOPratio number;
+         VcurrentNPratio number;
+         VpreviousNPratio number;
+      begin
+-- Gross Profit
+         select currentYear,previousYear into VcurrentGP,VpreviousGP from gl_dashboard where srno=7 and upper(userid)=upper(:APP_USER);
+-- Net Sales
+         select currentYear,previousYear into VcurrentSales,VpreviousSales from gl_dashboard where srno=1 and upper(userid)=upper(:APP_USER);
+-- Admin Expenses
+         select currentYear,previousYear into VcurrentAdmin,VpreviousAdmin from gl_dashboard where srno=8 and upper(userid)=upper(:APP_USER);
+-- Selling Expenses
+         select currentYear,previousYear into VcurrentSelling,VpreviousSelling from gl_dashboard where srno=9 and upper(userid)=upper(:APP_USER);
+-- Net Profit
+         select currentYear,previousYear into VcurrentNP,VpreviousNP from gl_dashboard where srno=11 and upper(userid)=upper(:APP_USER);
+
+-- Calculate Operating Profit
+         VcurrentOP  := (VcurrentGP-(VcurrentAdmin+VcurrentSelling));
+         VpreviousOP := (VpreviousGP-(VpreviousAdmin+VpreviousSelling));
+
+-- Calculate GP Ratios
+         VcurrentGPratio := (VcurrentGP/VcurrentSales) * 100;
+         VpreviousGPratio := (VpreviousGP/VpreviousSales) * 100;
+
+-- Calculate OP Ratios
+         VcurrentOPratio := VcurrentOP/VcurrentSales * 100;
+         VpreviousOPratio := VpreviousOP/VpreviousSales * 100;
+
+-- Calculate NP Ratios
+         VcurrentNPratio := VcurrentNP/VcurrentSales * 100;
+         VpreviousNPratio := VpreviousNP/VpreviousSales * 100;
+
+         insert into gl_dashboard values (50,'-',VcurrentGP,VpreviousGP,upper(:APP_USER),'Gross Profit Ratio',VcurrentGPratio,VpreviousGPratio);
+         insert into gl_dashboard values (52,'-',VcurrentOP,VpreviousOP,upper(:APP_USER),'Operating Profit Ratio',VcurrentOPratio,VpreviousOPratio);
+         insert into gl_dashboard values (53,'-',VcurrentNP,VpreviousNP,upper(:APP_USER),'Net Profit Ratio',VcurrentNPratio,VpreviousNPratio);
+         commit;
+      end;
+   end if;
+
+-- The REDIRECT_URL procedure of the APEX_UTIL package below redirects to the page from where this application process was called    
+   if :APP_PAGE_ID = 76 then -- Financial Statements Report
+      apex_util.redirect_url (p_url => 'f?p=&APP_ID.:76:&SESSION.');
+   elsif :APP_PAGE_ID = 1 then -- Desktop Dashboard
+      apex_util.redirect_url (p_url => 'f?p=&APP_ID.:1:&SESSION.');
+   else -- Mobile Home Page 6
+      apex_util.redirect_url (p_url => 'f?p=&APP_ID.:6:&SESSION.');
+   end if;
+END;

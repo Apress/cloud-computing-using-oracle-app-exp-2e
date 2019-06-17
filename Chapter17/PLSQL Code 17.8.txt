@@ -1,0 +1,24 @@
+declare
+  l_additional_parameters varchar2(32767);
+begin
+  xlib_jasperreports.set_report_url('http://localhost:8888/JasperReportsIntegration/report');
+
+-- construct additional parameter list
+  l_additional_parameters := 'V_VCHCODE=' || apex_util.url_encode(:P71_VCHCODE);
+  l_additional_parameters := l_additional_parameters || '&V_VCHDATEFROM=' || apex_util.url_encode(:P71_VCHDATEFROM);
+  l_additional_parameters := l_additional_parameters || '&V_VCHDATETO=' || apex_util.url_encode(:P71_VCHDATETO);
+  l_additional_parameters := l_additional_parameters || '&V_CREATEDFROM=' || apex_util.url_encode(:P71_CREATEDFROM);
+  l_additional_parameters := l_additional_parameters || '&V_CREATEDTO=' || apex_util.url_encode(:P71_CREATEDTO);
+  l_additional_parameters := l_additional_parameters || '&V_VCHNOFROM=' || apex_util.url_encode(:P71_VCHNOFROM);
+  l_additional_parameters := l_additional_parameters || '&V_VCHNOTO=' || apex_util.url_encode(:P71_VCHNOTO);
+  l_additional_parameters := l_additional_parameters || '&V_USERID=' || apex_util.url_encode(:P71_USERID);
+
+  xlib_jasperreports.show_report (p_rep_name => 'Voucher_Report',
+                                  p_rep_format => 'pdf',
+                                  p_data_source => 'default',
+                                  p_rep_locale => 'en-US',
+                                  p_out_filename => 'Voucher_Report.PDF',
+                                  p_additional_params => l_additional_parameters);
+-- stop rendering of the current APEX page 
+  apex_application.g_unrecoverable_error := true;
+end;

@@ -1,0 +1,8 @@
+select "U"."ROWID", 
+"U"."USERID",
+"G"."GROUPTITLE",
+"C"."CONAME",
+"U"."PASSWORD",
+"U"."ADMIN"
+from "GL_USERS" "U", "GL_GROUPS_MASTER" "G", "GL_COMPANY" "C"
+where "U"."COCODE"="C"."COCODE" and "U"."GROUPID"="G"."GROUPID"

@@ -1,0 +1,1 @@
+SELECT groupTitle d, groupID r FROM  gl_groups_master

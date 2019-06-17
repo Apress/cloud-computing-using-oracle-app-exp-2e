@@ -1,0 +1,10 @@
+declare
+   Vdbcccode varchar2(5);
+begin
+   select cccode into Vdbcccode from gl_cost_center where ROWID=:P14_ROWID;
+   if :P14_CCcode <> Vdbcccode then
+      return false;
+   else
+      return true;
+   end if;
+end;

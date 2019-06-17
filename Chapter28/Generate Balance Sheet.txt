@@ -1,0 +1,505 @@
+declare
+   VreportCode varchar2(4);
+   VreportTitle varchar2(50);
+   Vcocode number;
+   Vconame varchar2(50);
+   VcurrentYear number;
+   VpreviousYear number;
+   VcurrentFromDate date;
+   VcurrentToDate date;
+   Vcomonthname varchar2(9);
+   VpreviousFromDate date;
+   VpreviousToDate date;
+   VaccountFrom varchar2(11);
+   VaccountTo varchar2(11);
+   VcurrentSales number := 0;
+   VpreviousSales number := 0;
+   VcurrentOpeningStock number := 0;
+   VpreviousOpeningStock number := 0;
+   VcurrentClosingStock number := 0;
+   VpreviousClosingStock number := 0;
+   VcurrentCOG number := 0;
+   VpreviousCOG number := 0;
+   VcurrentGrossMargin number := 0;
+   VpreviousGrossMargin number := 0;
+   VcurrentAdmin number := 0;
+   VpreviousAdmin number := 0;
+   VcurrentSelling number := 0;
+   VPreviousSelling number := 0;
+   VcurrentFinancial number := 0;
+   VpreviousFinancial number := 0;
+   VcurrentProfitLoss number := 0;
+   VpreviousProfitLoss number := 0;
+   Vvariance number := 0;
+   Vpercent number := 0;
+   Vpercent2 number := 0;
+   Vcoacode varchar2(11);
+   vcoatitle varchar2(50);
+   VcurrentBalance number := 0;
+   VpreviousBalance number := 0;
+   Vsrno number := 0;  
+   Vrecords number := 0;
+   VfsAccount varchar2(50);
+   VcurrentPL number := 0;
+   VpreviousPL number := 0;
+   VCURRENTMONTH number(2) := 0;
+   VTESTVALUE NUMBER := 0;
+   Vnotes number := 0;
+   VnotesCode varchar2(11);
+
+-- BALANCE SHEET NOTES
+BEGIN
+  if :APP_PAGE_ID = 76 then 
+      Vcocode := :P76_COCODE;
+      Vconame := :P76_CONAME;
+      VreportCode := :P76_REPORTCODE;
+      VcurrentToDate := :P76_CURRENTTODATE;
+      VpreviousToDate := :P76_PREVIOUSTODATE;
+      VcurrentYear := :P76_CURRENTYEAR;
+      VCURRENTMONTH := :P76_CURRENTMONTH;
+      VcomonthName := :P76_COMONTHNAME;
+   elsif :APP_PAGE_ID = 1 then -- Desktop Dashboard
+      Vcocode := :P1_COCODE;
+      Vconame := null;
+      VreportCode := :P1_REPORTCODE;
+      VcurrentToDate := :P1_CURRENTTODATE;
+      VpreviousToDate := :P1_PREVIOUSTODATE;
+      VcurrentYear := :P1_CURRENTYEAR;
+      VCURRENTMONTH := :P1_CURRENTMONTH;
+      VcomonthName := null;  
+   else -- Mobile Home Page 6
+      Vcocode := :P6_COCODE;
+      Vconame := :P6_CONAME;
+      VreportCode := 'BS01';
+      VcurrentToDate := :P6_CURRENTTODATE;
+      VpreviousToDate := :P6_PREVIOUSTODATE;
+      VcurrentYear := :P6_CURRENTYEAR;
+      VCURRENTMONTH := :P6_CURRENTMONTH;
+      VcomonthName := :P6_COMONTHNAME;
+   end if;
+
+   declare
+      cursor fs_cur is
+      select fsAccount,AccountFrom,AccountTo 
+      from gl_fs_setup 
+      where reportcode=VreportCode;
+
+      fs_rec fs_cur%ROWTYPE;
+   begin 
+      select count(*) into Vrecords from gl_fs_setup where reportcode=VreportCode;
+      if Vrecords > 0 then       
+         for fs_rec in fs_cur loop
+            VfsAccount := fs_rec.fsAccount;
+            VaccountFrom := fs_rec.AccountFrom;
+            VaccountTo := fs_rec.AccountTo;
+            Declare 
+               Vcoacode varchar2(11);
+               vcoatitle varchar2(50);
+               VcurrentBalance number := 0;
+               VpreviousBalance number := 0;
+               VinsertSwitch number := 0;
+               VclosingEntry number := 0;
+               cursor coa_cur is
+               select coacode,coatitle 
+               from gl_coa 
+               where coacode between VaccountFrom and VaccountTo and coalevel=4 and cocode=Vcocode
+               order by coacode;
+               coa_rec coa_cur%ROWTYPE;
+            Begin
+               for coa_rec in coa_cur loop
+                  VinsertSwitch := 0;
+                  Vcoacode := coa_rec.coacode;
+                  Vcoatitle := coa_rec.coatitle;
+-- CAPITAL & LIABILITIES
+                  if VfsAccount='Share Capital' or VfsAccount='Reserves' or VfsAccount='Profit/(Loss)' or VfsAccount='Trade Creditors' or VfsAccount='Accrued Expenses' or VfsAccount='Short Term Finance' or VfsAccount='Advance From Customers' or VfsAccount='Accumulated Depreciation' or VfsAccount='Banks Overdrafts' or 
+                  VfsAccount='Long Term Liabilities' then
+                  if VfsAccount='Profit/(Loss)' then
+                     VclosingEntry := 0;
+                     select count(*) into VclosingEntry from gl_tran_master where closing=1 and cocode=Vcocode and coyear=VCURRENTYEAR; 
+                     if VclosingEntry = 0 then 
+                        select sum(TD.vchcr)-sum(TD.vchdr) into VcurrentBalance    -- Current Year
+                          from gl_tran_master TM, gl_tran_detail TD
+                         where TM.cocode=TD.cocode and
+                               TM.tran_no=TD.tran_no and
+                               TM.cocode=Vcocode and 
+                               TD.coacode = Vcoacode and
+                               TM.vchdate <= VcurrentToDate;
+                     else 
+                        if VCURRENTMONTH = 12 then -- Exclude calculated P&L value if it is the last month becuase the last month carries the closing entry with P&L figures.
+                           update gl_fs_report set currentBalance=0 where fsAccount like '%Profit/(Loss)%' and upper(userid)=upper(:APP_USER) and reportCode=VreportCode; 
+                           commit; 
+                        end if;
+                        select sum(TD.vchcr)-sum(TD.vchdr) into VcurrentBalance    -- Current Year
+                          from gl_tran_master TM, gl_tran_detail TD
+                         where TM.cocode=TD.cocode and
+                               TM.tran_no=TD.tran_no and
+                               TM.cocode=Vcocode and 
+                               TD.coacode = Vcoacode and
+                               TM.vchdate <= VcurrentToDate;
+                     end if;
+                     if VCURRENTMONTH = 12 then 
+                        update gl_fs_report set previousBalance=0 where fsAccount like '%Profit/(Loss)%' and upper(userid)=upper(:APP_USER) and reportCode=VreportCode; 
+                        commit;
+                     end if;
+                     select sum(TD.vchcr)-sum(TD.vchdr) into VpreviousBalance   -- Previous Year
+                       from gl_tran_master TM, gl_tran_detail TD
+                      where TM.cocode=TD.cocode and
+                            TM.tran_no=TD.tran_no and
+                            TM.cocode=Vcocode and 
+                            TD.coacode = Vcoacode and
+                            TM.vchdate <= VpreviousToDate;
+                  else -- Other than Profit/(Loss) account
+                     select sum(TD.vchcr)-sum(TD.vchdr) into VcurrentBalance    -- Current Year
+                       from gl_tran_master TM, gl_tran_detail TD
+                      where TM.cocode=TD.cocode and
+                            TM.tran_no=TD.tran_no and
+                            TM.cocode=Vcocode and 
+                            TD.coacode = Vcoacode and
+                            TM.vchdate <= VcurrentToDate;
+   
+                     select sum(TD.vchcr)-sum(TD.vchdr) into VpreviousBalance   -- Previous Year
+                       from gl_tran_master TM, gl_tran_detail TD
+                      where TM.cocode=TD.cocode and
+                            TM.tran_no=TD.tran_no and
+                            TM.cocode=Vcocode and 
+                            TD.coacode = Vcoacode and
+                            TM.vchdate <= VpreviousToDate;
+                  end if;
+                  if VfsAccount = 'Share Capital' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,202,'.......Share Capital',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+
+                  if VfsAccount = 'Reserves' then
+                    insert into gl_fs_report values (VreportCode,VreportTitle,203,'.......Reserves',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+ 
+                  if VfsAccount = 'Profit/(Loss)' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,204,'.......Profit/(Loss)',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+
+                  if VfsAccount = 'Trade Creditors' then
+                     if nvl(VcurrentBalance,0) >= 0 and nvl(VpreviousBalance,0) >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,206,'.......Trade Creditors',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+
+                     if VcurrentBalance >= 0 and VpreviousBalance < 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,206,'.......Trade Creditors',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+
+                     if VcurrentBalance < 0 and VpreviousBalance >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,206,'.......Trade Creditors',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+
+                     if VcurrentBalance < 0 then  -- 223=Trade Debts for negative Trade Creditors
+                        VcurrentBalance := VcurrentBalance-(VcurrentBalance * 2);
+                        insert into gl_fs_report values (VreportCode,VreportTitle,223,'.......Trade Debts',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        VinsertSwitch := 1;
+                     end if;
+
+                     if VpreviousBalance < 0 then
+                        VpreviousBalance := VpreviousBalance-(VpreviousBalance * 2);
+                        if VinsertSwitch = 0 then
+                           insert into gl_fs_report values (VreportCode,VreportTitle,223,'.......Trade Debts',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        else
+                           update gl_fs_report set previousBalance = VpreviousBalance where srno=223 and upper(userid)=upper(:APP_USER);
+                        end if;
+                     end if;
+                  end if;
+                  if VfsAccount = 'Accrued Expenses' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,207,'.......Accrued Expenses',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+
+                  if VfsAccount = 'Short Term Finance' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,208,'.......Short Term Finance',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+                  if VfsAccount = 'Advance From Customers' then
+                     if nvl(VcurrentBalance,0) >= 0 and nvl(VpreviousBalance,0) >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,209,'.......Advance From Customers',nvl
+(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance >= 0 and VpreviousBalance < 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,209,'.......Advance From Customers',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+
+                     if VcurrentBalance < 0 and VpreviousBalance >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,209,'.......Advance From Customers',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance < 0 then -- 224=Trade Debts for negative Advance From Customers
+                        VcurrentBalance := VcurrentBalance-(VcurrentBalance * 2);
+                        insert into gl_fs_report values (VreportCode,VreportTitle,224,'.......Trade Debts',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        VinsertSwitch := 1;
+                     end if;
+                     if VpreviousBalance < 0 then
+                        VpreviousBalance := VpreviousBalance-(VpreviousBalance * 2);
+                        if VinsertSwitch = 0 then
+                          insert into gl_fs_report values (VreportCode,VreportTitle,224,'.......Trade Debts',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        else
+                           update gl_fs_report set previousBalance = VpreviousBalance where srno=224 and upper(userid)=upper(:APP_USER);
+                        end if;
+                     end if;
+                  end if;
+                  if VfsAccount = 'Accumulated Depreciation' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,211,'.......Accumulated Depreciation',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+
+                  if VfsAccount = 'Long Term Liabilities' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,213,'.......Long Term Liabilities',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+                  commit;
+               end if;
+
+               if VfsAccount='Building' or VfsAccount='Office Equipment' or VfsAccount='Vehicles' or VfsAccount='Stock in Trade' or VfsAccount='Trade Debts' or VfsAccount='Cash and Bank' then
+                  select sum(TD.vchdr)-sum(TD.vchcr) into VcurrentBalance    -- Current Year
+                    from gl_tran_master TM, gl_tran_detail TD
+                   where TM.cocode=TD.cocode and
+                         TM.tran_no=TD.tran_no and
+                         TM.cocode=Vcocode and 
+                         TD.coacode = Vcoacode and
+                         TM.vchdate <= VcurrentToDate;
+
+                  select sum(TD.vchdr)-sum(TD.vchcr) into VpreviousBalance   -- Previous Year
+                    from gl_tran_master TM, gl_tran_detail TD
+                   where TM.cocode=TD.cocode and
+                         TM.tran_no=TD.tran_no and
+                         TM.cocode=Vcocode and 
+                         TD.coacode = Vcoacode and
+                         TM.vchdate <= VpreviousToDate;
+
+                  if VfsAccount = 'Building' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,217,'.......Building',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+                  if VfsAccount = 'Office Equipment' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,218,'.......Office Equipment',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+                  if VfsAccount = 'Vehicles' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,219,'.......Vehicles',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+                  if VfsAccount = 'Stock in Trade' then
+                     insert into gl_fs_report values (VreportCode,VreportTitle,221,'.......Stock in Trade',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                  end if;
+                  if VfsAccount = 'Trade Debts' then
+                     if nvl(VcurrentBalance,0) >= 0 and nvl(VpreviousBalance,0) >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,222,'.......Trade Debts',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance >= 0 and VpreviousBalance < 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,222,'.......Trade Debts',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance < 0 and VpreviousBalance >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,222,'.......Trade Debts',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance < 0 then -- 210=Advance From Customers for negative Trade Debts
+                        VcurrentBalance := VcurrentBalance-(VcurrentBalance * 2);
+                        insert into gl_fs_report values (VreportCode,VreportTitle,210,'.......Advance From Customers',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        VinsertSwitch := 1;
+                     end if;
+                     if VpreviousBalance < 0 then
+                        VpreviousBalance := VpreviousBalance-(VpreviousBalance * 2);
+                        if VinsertSwitch = 0 then
+                           insert into gl_fs_report values (VreportCode,VreportTitle,210,'.......Advance From Customers',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        else
+                           update gl_fs_report set previousBalance = VpreviousBalance where srno=210 and upper(userid)=upper(:APP_USER);
+                        end if;
+                     end if;
+                  end if;
+
+                  if VfsAccount = 'Cash and Bank' then
+                     if nvl(VcurrentBalance,0) >= 0 and nvl(VpreviousBalance,0) >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,225,'.......Cash and Bank',nvl(VcurrentBalance,0),nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance >= 0 and VpreviousBalance < 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,225,'.......Cash and Bank',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance < 0 and VpreviousBalance >= 0 then
+                        insert into gl_fs_report values (VreportCode,VreportTitle,225,'.......Cash and Bank',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                     end if;
+                     if VcurrentBalance < 0 then -- 212=Banks Overdrafts for negative bank balances
+                        VcurrentBalance := VcurrentBalance-(VcurrentBalance * 2);
+                        insert into gl_fs_report values (VreportCode,VreportTitle,212,'.......Banks Overdrafts',nvl(VcurrentBalance,0),0,0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        VinsertSwitch := 1;
+                     end if;
+                     if VpreviousBalance < 0 then
+                        VpreviousBalance := VpreviousBalance-(VpreviousBalance * 2);
+                        if VinsertSwitch = 0 then
+                           insert into gl_fs_report values (VreportCode,VreportTitle,212,'.......Banks Overdrafts',0,nvl(VpreviousBalance,0),0,upper(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,Vcoacode,Vcoatitle,0);
+                        else
+                           update gl_fs_report set previousBalance = VpreviousBalance where srno=212 and upper(userid)=upper(:APP_USER);
+                        end if;
+                     end if;
+                  end if;
+                  commit;
+               end if;
+            end loop;
+         End;
+      end loop;
+
+-- Incorporate current Profit/(Loss) into Balance Sheet
+      if VreportCode like 'BS%' then
+         select currentBalance,previousBalance into VcurrentPL,VpreviousPL from gl_fs_report where fsAccount='Net Profit/(Loss)' and upper(userid)=upper(:APP_USER);
+         insert into gl_fs_report values (VreportCode,VreportTitle,204,'.......Profit/(Loss)',nvl(VcurrentPL,0),nvl(VpreviousPL,0),0,upper
+(:APP_USER),Vconame,VCURRENTYEAR,Vcomonthname,0,0,1,null,null,0);
+         commit;
+      end if;
+ 
+      delete from gl_fs_report where currentbalance=0 and previousbalance=0;
+      if :APP_PAGE_ID=76 and VreportCode like 'BS%' then
+         delete from gl_fs_report where srno < 200 and upper(userid)=upper(:APP_USER);
+         commit;
+      end if;
+      update gl_fs_report set srno=209 where srno=210 and upper(userid)=upper(:APP_USER);
+      update gl_fs_report set srno=222 where srno=223 or srno=224 and upper(userid)=upper(:APP_USER);
+      commit;
+
+     end if;
+   end;
+
+-- CLUB BALANCE SHEET ACCOUNTS
+   declare
+      cursor fs_report_cur is
+      select srno,fsaccount,sum(currentbalance) currentbalance,sum(previousbalance) previousbalance
+      from gl_fs_report
+      where reportcode = VreportCode and upper(userid) = upper(:APP_USER)
+      group by srno,fsaccount
+      order by srno;
+      fs_report_rec fs_report_cur%ROWTYPE;
+   begin
+      select distinct reportTitle into VreportTitle from gl_fs_setup where cocode=Vcocode and reportCode=VreportCode;
+      if VreportCode like 'BS%' then
+         for fs_report_rec in fs_report_cur loop
+            Vsrno := fs_report_rec.srno;  
+            VfsAccount := fs_report_rec.fsAccount;  
+            VcurrentBalance := fs_report_rec.currentBalance;  
+            VpreviousBalance := fs_report_rec.previousBalance;  
+            insert into gl_fs_report values (VreportCode,VreportTitle,Vsrno,VfsAccount,VcurrentBalance,VpreviousBalance,0,upper(:APP_USER),VCONAME,VCURRENTYEAR,VCOMONTHNAME,0,0,0,null,null,0);
+            commit;         
+         end loop;
+      end if;
+   end;
+
+-- CALCULATE BS VARIANCE/PERCENTAGE
+   declare
+      cursor fs_report_cur is
+      select srno,fsaccount,currentbalance,previousbalance,notes,notescode
+      from gl_fs_report
+      where reportcode = :P76_REPORTCODE and upper(userid) = upper(:APP_USER)
+      order by srno;
+      fs_report_rec fs_report_cur%ROWTYPE;
+   begin
+      for fs_report_rec in fs_report_cur loop
+            Vsrno := fs_report_rec.srno;  
+            VfsAccount := fs_report_rec.fsAccount;  
+            VcurrentBalance := fs_report_rec.currentBalance;  
+            VpreviousBalance := fs_report_rec.previousBalance;  
+            Vnotes := fs_report_rec.notes;  
+            VnotesCode := fs_report_rec.notesCode;  
+            Vvariance := VcurrentBalance - VpreviousBalance;
+            if VpreviousBalance <> 0 then
+               Vpercent := (Vvariance/VpreviousBalance) * 100;
+            else
+               Vpercent := 0;
+            end if;
+            if Vnotes=1 then
+               update gl_fs_report set percent=Vpercent where srno=Vsrno and notes=Vnotes and notescode=VnotesCode and reportCode=:P76_REPORTCODE and upper(userid)=upper(:APP_USER);
+            else
+               update gl_fs_report set percent=Vpercent where srno=Vsrno and notes=0 and reportCode=:P76_REPORTCODE and upper(userid)=upper(:APP_USER);
+            end if;
+            commit;
+      end loop;
+   end;
+
+-- INSERT BS HEADINGS & GRAND TOTALS
+   declare
+      VcurrentCapital number := 0;
+      VpreviousCapital number := 0;
+      VcurrentAsset number := 0;
+      VpreviousAsset number := 0;
+   begin
+      IF :P76_REPORTCODE Like 'BS%' then
+         select sum(currentbalance) into VcurrentCapital
+         from gl_fs_report
+         where reportcode = :P76_REPORTCODE and upper(userid) = upper(:APP_USER) and srno between 202 and 213 and notes=0;
+   
+         select sum(previousbalance) into VpreviousCapital
+         from gl_fs_report
+         where reportcode = :P76_REPORTCODE and upper(userid) = upper(:APP_USER) and srno between 202 and 213 and notes=0;
+
+         select sum(currentbalance) into VcurrentAsset
+         from gl_fs_report
+         where reportcode = :P76_REPORTCODE and upper(userid) = upper(:APP_USER) and srno between 217 and 225 and notes=0;
+
+         select sum(previousbalance) into VpreviousAsset
+         from gl_fs_report
+         where reportcode = :P76_REPORTCODE and upper(userid) = upper(:APP_USER) and srno between 217 and 225 and notes=0;
+
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,201,'CAPITAL AND LIABILITIES',null,null,null,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,0,0,null,null,1);
+  
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,205,'LIABILITIES',null,null,null,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,0,0,null,null,1);
+
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,214,'TOTAL CAPITAL AND LIABILITIES',VcurrentCapital,VpreviousCapital,0,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,1,0,null,null,1);
+
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,215,'ASSETS',null,null,null,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,0,0,null,null,1);
+
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,216,'...FIXED ASSETS',null,null,null,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,0,0,null,null,1);
+
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,220,'...CURRENT ASSETS',null,null,null,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,0,0,null,null,1);
+
+         insert into gl_fs_report values (:P76_REPORTCODE,VreportTitle,226,'TOTAL ASSETS',VcurrentAsset,VpreviousAsset,0,upper
+         (:APP_USER),:P76_CONAME,:P76_CURRENTYEAR,:P76_COMONTHNAME,0,1,0,null,null,1);
+ 
+         commit;
+      end if;
+   end;
+
+-- Balance Sheet Ratios
+   if :APP_PAGE_ID = 1 or :APP_PAGE_ID = 6 then -- Desktop dashboard or mobile home page
+      declare
+         VcurrentCA number;
+         VpreviousCA number;
+         VcurrentCL number;
+         VpreviousCL number;
+         VcurrentQCA number;
+         VpreviousQCA number;
+         Vcurrent_CurrentRatio number;
+         Vprevious_CurrentRatio number;
+         Vcurrent_NWC number;
+         Vprevious_NWC number;
+         Vcurrent_QuickRatio number;
+         Vprevious_QuickRatio number;
+      begin
+-- Current Assets
+         select sum(currentBalance), sum(previousBalance) into VcurrentCA, VpreviousCA from gl_fs_report where notes=0 and (srno=221 or srno=222 or srno=225);
+-- Current Liabilities
+         select sum(currentBalance), sum(previousBalance) into VcurrentCL, VpreviousCL from gl_fs_report where notes=0 and (srno=206 or srno=207 or srno=208 or srno=209 or srno=211 or srno=212);
+-- Quick Current Assets
+         select sum(currentBalance), sum(previousBalance) into VcurrentQCA, VpreviousQCA from gl_fs_report where notes=0 and (srno=222 or srno=225);
+-- Current Ratio
+         Vcurrent_CurrentRatio := VcurrentCA / VcurrentCL;
+         Vprevious_CurrentRatio := VpreviousCA / VpreviousCL;
+-- Net Working Capital
+         Vcurrent_NWC := VcurrentCA - VcurrentCL;
+         Vprevious_NWC := VpreviousCA - VpreviousCL;
+-- Quick Ratio
+         Vcurrent_QuickRatio := VcurrentQCA / VcurrentCL;
+         Vprevious_QuickRatio := VpreviousQCA / VpreviousCL;
+
+         insert into gl_dashboard values (60,'Current Assets',VcurrentCA,VpreviousCA,upper(:APP_USER),'Current Ratio',Vcurrent_CurrentRatio,Vprevious_CurrentRatio);
+         insert into gl_dashboard values (61,'Current Liabilities',VcurrentCL,VpreviousCL,upper(:APP_USER),'Current Liabilities',1,1);
+         insert into gl_dashboard values (62,'Net Working Capital',Vcurrent_NWC,Vprevious_NWC,upper(:APP_USER),'Net Working Capital',Vcurrent_NWC,Vprevious_NWC);
+         insert into gl_dashboard values (63,'Quick Current Assets',VcurrentQCA,VpreviousQCA,upper(:APP_USER),'Quick Ratio',Vcurrent_QuickRatio,Vprevious_QuickRatio);
+         commit;
+      end;
+   end if;   
+-- The REDIRECT_URL procedure of the APEX_UTIL package below redirects to the page from where this application process was called    
+   if :APP_PAGE_ID = 76 then -- Financial Statements Report
+      apex_util.redirect_url (p_url => 'f?p=&APP_ID.:76:&SESSION.');
+   elsif :APP_PAGE_ID = 1 then -- Desktop Dashboard
+      apex_util.redirect_url (p_url => 'f?p=&APP_ID.:1:&SESSION.');
+   else -- Mobile Home Page 6
+      apex_util.redirect_url (p_url => 'f?p=&APP_ID.:6:&SESSION.');
+   end if;
+END;

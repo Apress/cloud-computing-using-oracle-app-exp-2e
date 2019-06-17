@@ -1,0 +1,1 @@
+select coname d, cocode r from gl_company order by 1

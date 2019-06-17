@@ -1,0 +1,121 @@
+DECLARE
+Vcocode number;
+VactivityDr number := 0;
+VactivityCr number := 0;
+VclosingBal number := 0;
+Vconame     varchar2(50);
+Vbanktitle  varchar2(50);
+Vosdebit    number := 0;
+Voscredit   number := 0;
+Vamount     number := 0;
+VtranDebit  number := 0;
+VtranCredit number := 0;
+Vmonthyear  varchar2(14);
+Vvchdate    date;
+Vvchtype    varchar2(6);
+Vvchno      number := 10;
+Vvchdescription varchar2(150);
+vremarks    varchar2(150);
+Vvchreference varchar2(25);
+Vsrno       number := 1;
+VbankBalance number := 0;
+
+-- Opening Bank Outstandings Cursor
+cursor os_cur is
+select remarks,vchdr,vchcr from gl_banks_os where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and coacode=:P74_BANK and reconciled=0 order by sr_no;
+
+-- Bank's current transactions cursor
+cursor tran_cur is
+SELECT TM.VCHDATE, VCH.VCHTYPE, TM.VCHNO, TD.VCHDESCRIPTION, TD.VCHREFERENCE, TD.VCHDR, TD.VCHCR 
+FROM  GL_VOUCHER VCH, GL_TRAN_MASTER TM, GL_TRAN_DETAIL TD 
+WHERE TM.COCODE=TD.COCODE AND 
+      TM.TRAN_NO=TD.TRAN_NO AND 
+      TM.VCHCODE=VCH.VCHCODE AND 
+      TM.vchdate <= to_date(:P74_REPORTDATE,'DD-MON-YYYY') AND
+      TM.CLOSING=0 AND 
+      TM.VCHDESCRIPTION <> 'OPENING BALANCES' AND 
+      TM.COCODE=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) AND 
+      TD.COACODE=:P74_BANK AND 
+      TD.RECONCILED=0
+ORDER BY TM.vchdate;
+os_rec os_cur%ROWTYPE;
+tran_rec tran_cur%ROWTYPE;
+
+BEGIN
+   delete from gl_reconcile_report where upper(userid)=upper(:APP_USER);   -- Delete user's existing report  
+   commit;
+   select cocode into Vcocode from gl_users where upper(userid)=upper(:APP_USER);
+   select coname into Vconame from gl_company where cocode=Vcocode;
+   select coatitle into Vbanktitle from gl_coa where coacode=:P74_BANK and cocode=Vcocode;
+
+-- Evaluate bank's balance as per ledger
+   select sum(TD.vchdr), sum(TD.vchcr) into VactivityDr,VactivityCr
+   FROM  gl_tran_master TM, gl_tran_detail TD
+   WHERE TM.tran_no=TD.tran_no and
+         TM.cocode=Vcocode AND 
+         TD.coacode=:P74_BANK AND 
+         TM.vchdate <= to_date(:P74_REPORTDATE,'DD-MON-YYYY') AND
+         TM.cocode=TD.cocode AND 
+         TM.closing=0;
+   if VactivityDr > VactivityCr then
+      VclosingBal := VactivityDr - VactivityCr;
+   elsif VactivityCr > VactivityDr then
+      VclosingBal := VactivityCr - VactivityDr;
+      VclosingBal := VclosingBal-(VclosingBal * 2); -- Make OD balance negative
+   else 
+      VclosingBal := 0;
+   end if;
+
+   insert into gl_reconcile_report values (Vsrno,upper(:APP_USER),Vconame,to_date(:P74_REPORTDATE,'DD-MON-
+YYYY'),:P74_BANK,Vbanktitle,null,null,null,null,'Balance as per Ledger',null,VclosingBal);
+   commit;
+
+   for os_rec in os_cur loop      -- os stands for opening outstanding
+      Vsrno := Vsrno + 1;
+      Vremarks := os_rec.remarks;
+      Vosdebit := os_rec.vchdr;
+      Voscredit := os_rec.vchcr;
+      if Vosdebit > 0 then
+         Vamount := Vosdebit;
+         Vamount := Vamount-(Vamount * 2); -- Made negative to exclude the amount
+      elsif Voscredit > 0 then
+         Vamount := Voscredit;
+      else
+         Vamount := 0;
+      end if;
+      insert into gl_reconcile_report values (Vsrno,upper(:APP_USER),Vconame,to_date(:P74_REPORTDATE,'DD-MON-
+
+YYYY'),:P74_BANK,Vbanktitle,null,null,null,null,Vremarks,null,Vamount);
+      commit;
+   end loop;
+
+   for tran_rec in tran_cur loop
+      Vsrno := Vsrno + 1;
+      Vvchdate := tran_rec.vchdate;
+      Vvchtype := tran_rec.vchtype;
+      Vvchno   := tran_rec.vchno;
+      Vvchdescription := tran_rec.vchdescription;
+      Vvchreference := tran_rec.vchreference;
+      VtranDebit := tran_rec.vchdr;
+      VtranCredit := tran_rec.vchcr;
+      Vmonthyear := TRIM(to_char(Vvchdate,'Month'))||'-'||to_char(Vvchdate,'YYYY');
+      if VtranDebit > 0 then
+         Vamount := VtranDebit;
+         Vamount := Vamount-(Vamount * 2); -- Made negative to exclude the amount
+      elsif VtranCredit > 0 then
+         Vamount := VtranCredit;
+      else
+         Vamount := 0;
+      end if;
+
+      insert into gl_reconcile_report values (Vsrno,upper(:APP_USER),Vconame,to_date(:P74_REPORTDATE,'DD-MON-
+
+YYYY'),:P74_BANK,Vbanktitle,Vmonthyear,Vvchdate,Vvchtype,Vvchno,Vvchdescription,Vvchreference,Vamount);
+      commit;
+   end loop;
+   select sum(amount) into VbankBalance from gl_reconcile_report where upper(userid)=upper(:APP_USER); 
+      insert into gl_reconcile_report values (Vsrno+1,upper(:APP_USER),Vconame,to_date(:P74_REPORTDATE,'DD-MON-
+
+YYYY'),:P74_BANK,Vbanktitle,null,null,null,null,'Balance as per bank statement',null,VbankBalance);
+      commit;
+END;

@@ -1,0 +1,37 @@
+Note that the DBMS_OBFUSCATION_TOOLKIT package has been deprecated in favor of DBMS_CRYPTO, which is now used to encrypt and decrypt data and provides support for various industry-standard encryption and hashing algorithms, including the Advanced Encryption Standard (AES) encryption algorithm. AES has been approved as a new standard to replace the Data Encryption Standard (DES).  
+Oracle Database installs DBMS_CRYPTO package in the SYS schema. In order to use this package, users must be granted access to it, as shown below: 
+
+conn sys/manager as sysdba
+grant execute on sys.dbms_crypto to <user>;
+
+-- CUSTOM HASH FUNCTION
+create or replace function custom_hash (p_userName in varchar2, p_password in varchar2) return varchar2 is
+   l_password varchar2(4000);
+   l_hash_function number;
+begin
+   l_hash_function := dbms_crypto.hash_sh1;
+   l_password := dbms_crypto.hash(utl_raw.cast_to_raw(p_userName||p_password),l_hash_function);
+   return l_password;
+end;
+
+The function receives username and password on line # 1 as parameters from the login form and compares this information with the values stored in the GL_USERS table after applying the CUSTOM_HASH function. If the provided information matches with the table values, the user is authenticated and is allowed to access the application.
+
+-- CUSTOM AUTH FUNCTION
+create or replace function custom_auth (p_userName in VARCHAR2, p_password in VARCHAR2) return BOOLEAN is
+   l_password varchar2(4000);
+   l_stored_password varchar2(4000);
+   l_count number;
+begin
+   select count(*) into l_count from gl_users where userID = p_userName;
+   if l_count > 0 then
+      select password into l_stored_password from gl_users where userID = p_userName;
+      l_password := custom_hash(p_userName, p_password);
+      if l_password = l_stored_password then
+         return true;
+      else
+         return false;
+      end if;
+   else
+      return false;
+   end if;
+end;

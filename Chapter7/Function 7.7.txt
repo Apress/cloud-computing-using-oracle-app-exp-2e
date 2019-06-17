@@ -1,0 +1,4 @@
+function pageItemName(selectedNode)
+{
+  $s('P21_SELECTED_NODE', selectedNode);
+}

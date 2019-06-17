@@ -1,0 +1,6 @@
+-- P72_FROM
+SELECT pfrom from gl_fiscal_year WHERE cocode=(select cocode from gl_users where userid = :APP_USER) AND coyear=(select coyear from gl_users where userid = :APP_USER) AND comonthid=1
+
+
+-- P72_TO
+SELECT pto FROM gl_fiscal_year WHERE cocode=(select cocode from gl_users where userid = :APP_USER) AND coyear=(select coyear from gl_users where userid = :APP_USER) AND comonthid=12

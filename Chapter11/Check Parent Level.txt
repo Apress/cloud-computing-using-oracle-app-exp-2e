@@ -1,0 +1,15 @@
+declare
+   VparentFound number := 0;
+   VparentCode varchar2(2);
+begin
+   if :P14_CCLEVEL = 2 then
+      VparentCode := substr(:P14_CCcode,1,2);
+      select count(*) into VparentFound from gl_cost_center where CCcode=trim(VparentCode) and CClevel=1 and cocode=(select
+cocode from gl_users where upper(userid)=upper(:APP_USER));
+      if VparentFound = 0 then
+         return false;
+      else
+         return true;
+      end if;
+   end if;
+end;

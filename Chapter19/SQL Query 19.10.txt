@@ -1,0 +1,1 @@
+select * from gl_trial_balance where upper(userid)=upper(:APP_USER) order by coacode

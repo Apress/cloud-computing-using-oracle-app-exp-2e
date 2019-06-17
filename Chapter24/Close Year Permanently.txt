@@ -1,0 +1,2 @@
+update gl_fiscal_year set year_closed=1 where cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER));
+commit;

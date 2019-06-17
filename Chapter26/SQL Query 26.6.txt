@@ -1,0 +1,3 @@
+SELECT * FROM gl_budget_report 
+WHERE userid=:APP_USER 
+ORDER BY grand_total,coacode

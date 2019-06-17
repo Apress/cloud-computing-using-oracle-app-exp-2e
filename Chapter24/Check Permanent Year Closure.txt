@@ -1,0 +1,13 @@
+declare
+   Vyearclosed number := 0;
+   Verrortext varchar2(100);
+begin
+   select count(*) into Vyearclosed from gl_fiscal_year 
+   where year_closed=1 and 
+         cocode=(select cocode from gl_users where upper(userid)=upper(:APP_USER)) and
+         coyear=(select coyear from gl_users where upper(userid)=upper(:APP_USER));
+   if Vyearclosed > 0 THEN
+      Verrortext := 'Cannot proceed with this process because year is already permanently closed';
+   end if;
+   return rtrim(Verrortext);
+end;

@@ -1,0 +1,68 @@
+declare
+   Vbudgetrecords number := 0;
+   Vcoacode varchar2(11);
+   Vpfrom date;
+   Vpto   date;
+   Vbalance number := 0;
+   cursor coa_cur is
+   select coacode from gl_coa where cocode=:P55_COCODE and coanature=:P55_COANATURE and coalevel=4 order by coacode;
+   coa_rec coa_cur%ROWTYPE;
+begin
+   select count(*) into Vbudgetrecords from gl_budget where cocode=:P55_COCODE and coyear=:P55_COYEAR and coanature=:P55_COANATURE;
+   if Vbudgetrecords = 0 then
+      for coa_rec in coa_cur loop
+         Vcoacode := coa_rec.coacode;
+         for j in 1 .. 12 Loop
+            select pfrom,pto into Vpfrom,Vpto from gl_fiscal_year where comonthid=j and cocode=:P55_COCODE and coyear=:P55_COYEAR-1;  
+            if :P55_COANATURE='Assets' or :P55_COANATURE='Expenses' then 
+               select sum(TD.vchdr)-sum(TD.vchcr) into Vbalance
+                 from gl_tran_master TM, gl_tran_detail TD
+                where TM.cocode=TD.cocode and
+                      TM.tran_no=TD.tran_no and
+                      TM.cocode=:P55_COCODE and 
+                      TD.coacode=Vcoacode and
+                      TM.vchdate between Vpfrom and Vpto and
+                      TM.closing=0;
+            end if;
+            if :P55_COANATURE='Capital' or :P55_COANATURE='Liabilities' or :P55_COANATURE='Revenue' then 
+               select sum(TD.vchcr)-sum(TD.vchdr) into Vbalance
+                 from gl_tran_master TM, gl_tran_detail TD
+                where TM.cocode=TD.cocode and
+                      TM.tran_no=TD.tran_no and
+                      TM.cocode=:P55_COCODE and 
+                      TD.coacode=Vcoacode and
+                      TM.vchdate between Vpfrom and Vpto and
+		      TM.closing=0;
+            end if;
+            if j=1 then
+               insert into gl_budget (cocode,coyear,coacode,coanature,cccode,budget_amount1,criterion) values (:P55_COCODE,:P55_COYEAR,Vcoacode,:P55_COANATURE,null,Vbalance,3);
+            elsif j=2 then
+               update gl_budget set budget_amount2=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=3 then
+               update gl_budget set budget_amount3=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=4 then
+               update gl_budget set budget_amount4=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=5 then
+               update gl_budget set budget_amount5=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=6 then
+               update gl_budget set budget_amount6=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=7 then
+               update gl_budget set budget_amount7=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=8 then
+               update gl_budget set budget_amount8=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=9 then
+               update gl_budget set budget_amount9=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=10 then
+               update gl_budget set budget_amount10=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            elsif j=11 then
+               update gl_budget set budget_amount11=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            else
+               update gl_budget set budget_amount12=Vbalance where cocode=:P55_COCODE and coyear=:P55_COYEAR and coacode=Vcoacode;
+            end if;
+            commit;
+         end loop;
+      end loop;
+   end if;
+   EXCEPTION
+   WHEN NO_DATA_FOUND THEN null;
+end;

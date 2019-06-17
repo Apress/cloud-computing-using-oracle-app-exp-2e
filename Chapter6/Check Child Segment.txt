@@ -1,0 +1,10 @@
+declare
+   VchildExist number := 0;
+   Verrortext varchar2(60);
+begin
+   select count(*) into VchildExist from gl_segments where segmentParent=:P20_SEGMENTID;
+   if VchildExist > 0 then
+      Verrortext := 'Cannot delete, this segment has child entries';
+   end if;
+   return rtrim(Verrortext);
+end;

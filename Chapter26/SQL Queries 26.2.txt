@@ -1,0 +1,16 @@
+SELECT coacode||'-'||coatitle d, coacode r FROM gl_coa 
+WHERE  cocode=(select cocode from gl_users where userid=:APP_USER) AND coalevel=4 AND coanature=:P75_COANATURE
+ORDER BY coacode
+
+
+
+SELECT comonthname d,comonthid r FROM gl_fiscal_year 
+WHERE cocode=(select cocode from gl_users where userid=:APP_USER) AND coyear=(select coyear from gl_users where userid=:APP_USER)
+ORDER BY comonthid
+
+
+SELECT cocode FROM gl_users WHERE userid=:APP_USER
+
+
+SELECT coyear FROM gl_users WHERE userid=:APP_USER
+
